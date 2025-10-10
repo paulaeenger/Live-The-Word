@@ -43,6 +43,7 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .result { margin-top:16px; padding:20px; background:#fff; border:1px solid #e5e5e5; border-radius:8px; display:none; }
     .result.show { display:block; }
+    .result h2 { margin:0 0 12px; font-size:20px; }
     .result h3 { margin:16px 0 8px; font-size:16px; }
     .result p, .result li { line-height:1.6; }
     .error { background:#FEF2F2; border:1px solid #FEE2E2; color:#991B1B; padding:12px; border-radius:8px; margin-top:12px; display:none; }
@@ -61,7 +62,6 @@
       <button class="tab" data-tab="talks">Conference Talks</button>
     </div>
 
-    <!-- Scripture Tab -->
     <div class="tab-content active" id="scriptures-content">
       <div class="card">
         <div class="grid g3">
@@ -89,15 +89,12 @@
       </div>
     </div>
 
-    <!-- Conference Talks Tab -->
     <div class="tab-content" id="talks-content">
       <div class="card">
         <div class="grid g3">
           <div>
             <label>Year</label>
-            <select id="talkYear">
-              <option value="">All Years</option>
-            </select>
+            <select id="talkYear"><option value="">All Years</option></select>
           </div>
           <div>
             <label>Month</label>
@@ -144,7 +141,6 @@
     let canons = [];
     let selectedTalk = null;
     
-    // Tab switching
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -154,7 +150,6 @@
       });
     });
 
-    // Load scripture data
     fetch('/api/canons').then(r => r.json()).then(data => {
       canons = data;
       fillCanon();
@@ -162,7 +157,6 @@
       fillChapters();
     });
 
-    // Load talk years
     fetch('/api/talks/years').then(r => r.json()).then(years => {
       const yearSelect = document.getElementById('talkYear');
       years.forEach(year => {
@@ -217,7 +211,6 @@
     canonSel.addEventListener('change', () => { fillBooks(); fillChapters(); });
     bookSel.addEventListener('change', fillChapters);
 
-    // Talk filtering
     document.getElementById('talkFilterBtn').addEventListener('click', async () => {
       const year = document.getElementById('talkYear').value;
       const month = document.getElementById('talkMonth').value;
@@ -254,7 +247,7 @@
       }
       
       resultsDiv.innerHTML = talks.map((talk, idx) => `
-        <div class="talk-item" data-index="${idx}" data-title="${talk.title}" data-speaker="${talk.speaker}" data-url="${talk.url || ''}" data-year="${talk.year}">
+        <div class="talk-item" data-title="${talk.title}" data-speaker="${talk.speaker}">
           <div class="talk-title">${talk.title}</div>
           <div class="talk-meta">${talk.speaker} • ${talk.month} ${talk.year}</div>
         </div>
@@ -268,50 +261,123 @@
           item.classList.add('selected');
           selectedTalk = {
             title: item.dataset.title,
-            speaker: item.dataset.speaker,
-            url: item.dataset.url,
-            year: item.dataset.year
+            speaker: item.dataset.speaker
           };
           document.getElementById('talkAnalyzeBtn').disabled = false;
         });
       });
     }
 
-    // Scripture summary - PLACEHOLDER (API endpoint not implemented yet)
+    // REAL Scripture Summary API Call
     document.getElementById('scriptureBtn').addEventListener('click', async () => {
       const loader = document.getElementById('scriptureLoader');
       const error = document.getElementById('scriptureError');
       const result = document.getElementById('scriptureResult');
       
+      const search = document.getElementById('scriptureSearch').value.trim();
+      const book = document.getElementById('book').value;
+      const chapter = document.getElementById('chapter').value;
+      const reference = search || `${book} ${chapter}`;
+      const focus = document.getElementById('scriptureFocus').value.trim();
+      const length = document.getElementById('scriptureLength').value;
+      
       loader.classList.add('show');
       error.classList.remove('show');
       result.classList.remove('show');
       
-      setTimeout(() => {
-        loader.classList.remove('show');
-        error.textContent = 'Scripture summary API endpoint not yet implemented. Coming soon!';
+      try {
+        const response = await fetch('/api/summarize/scripture', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ reference, focus, length })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to generate summary');
+        }
+        
+        displayScriptureResult(data);
+      } catch (err) {
+        error.textContent = err.message;
         error.classList.add('show');
-      }, 1000);
+      } finally {
+        loader.classList.remove('show');
+      }
     });
 
-    // Talk analysis - PLACEHOLDER (API endpoint not implemented yet)
+    // REAL Talk Analysis API Call
     document.getElementById('talkAnalyzeBtn').addEventListener('click', async () => {
       if (!selectedTalk) return;
       
       const loader = document.getElementById('talkLoader');
       const error = document.getElementById('talkError');
       const result = document.getElementById('talkResult');
+      const focus = document.getElementById('talkFocus').value.trim();
+      const length = document.getElementById('talkLength').value;
       
       loader.classList.add('show');
       error.classList.remove('show');
       result.classList.remove('show');
       
-      setTimeout(() => {
-        loader.classList.remove('show');
-        error.textContent = 'Talk analysis API endpoint not yet implemented. Coming soon!';
+      try {
+        const response = await fetch('/api/summarize/talk', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            title: selectedTalk.title,
+            speaker: selectedTalk.speaker,
+            focus,
+            length
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to analyze talk');
+        }
+        
+        displayTalkResult(data);
+      } catch (err) {
+        error.textContent = err.message;
         error.classList.add('show');
-      }, 1000);
+      } finally {
+        loader.classList.remove('show');
+      }
     });
+
+    function displayScriptureResult(data) {
+      const result = document.getElementById('scriptureResult');
+      result.innerHTML = `
+        <h2>${data.reference}</h2>
+        <h3>Overview</h3><p>${data.overview}</p>
+        <h3>Historical Context</h3><p>${data.historical_context}</p>
+        <h3>Summary</h3><p>${data.summary}</p>
+        <h3>Key Verses</h3><ul>${data.key_verses.map(v => `<li>${v}</li>`).join('')}</ul>
+        <h3>Themes</h3><ul>${data.themes.map(t => `<li>${t}</li>`).join('')}</ul>
+        <h3>Life Application</h3><ul>${data.life_application.map(a => `<li>${a}</li>`).join('')}</ul>
+        <h3>Reflection Questions</h3><ul>${data.reflection_questions.map(q => `<li>${q}</li>`).join('')}</ul>
+        <h3>Cross-References</h3><ul>${data.cross_references.map(c => `<li>${c}</li>`).join('')}</ul>
+      `;
+      result.classList.add('show');
+    }
+
+    function displayTalkResult(data) {
+      const result = document.getElementById('talkResult');
+      result.innerHTML = `
+        <h2>${data.title}</h2>
+        <p><strong>Speaker:</strong> ${data.speaker}</p>
+        <h3>Summary</h3><p>${data.summary}</p>
+        <h3>Key Messages</h3><ul>${data.key_messages.map(m => `<li>${m}</li>`).join('')}</ul>
+        <h3>Quotes</h3><ul>${data.quotes.map(q => `<li>${q}</li>`).join('')}</ul>
+        <h3>Life Application</h3><ul>${data.life_application.map(a => `<li>${a}</li>`).join('')}</ul>
+        <h3>Reflection Questions</h3><ul>${data.reflection_questions.map(q => `<li>${q}</li>`).join('')}</ul>
+        <h3>Related Scriptures</h3><ul>${data.related_scriptures.map(s => `<li>${s}</li>`).join('')}</ul>
+      `;
+      result.classList.add('show');
+    }
   </script>
 </body>
 </html>
