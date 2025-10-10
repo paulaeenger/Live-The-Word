@@ -14,6 +14,58 @@ except Exception as e:
     client = None
     print(f"OpenAI initialization error: {e}")
 
+# BASE PROMPTS
+BASE_PROMPT_SCRIPTURE = """You are a respectful, non-preachy scripture study guide.
+Task: Summarize a scripture chapter (or range) and provide life application for a general audience.
+
+Return JSON in this exact shape:
+{
+  "reference": string,
+  "overview": string,
+  "historical_context": string,
+  "summary": string,
+  "key_verses": string[],
+  "themes": string[],
+  "life_application": string[],
+  "reflection_questions": string[],
+  "cross_references": string[]
+}
+
+Guidelines:
+- Be accurate to the chapter's content. Avoid quoting long passages; paraphrase.
+- Keep a warm, invitational tone.
+- "Life application" should be practical and specific (habits, small steps, questions).
+- If a theme is provided instead of a chapter, recommend 3-5 chapters and summarize the top one.
+- If a range is provided (e.g., Mosiah 2-5), weave the arc concisely."""
+
+BASE_PROMPT_TALKS = """You are a helpful conference talk analyzer.
+Task: Analyze a General Conference talk and provide insights for personal application.
+
+Return JSON in this exact shape:
+{
+  "title": string,
+  "speaker": string,
+  "summary": string,
+  "key_messages": string[],
+  "quotes": string[],
+  "life_application": string[],
+  "reflection_questions": string[],
+  "related_scriptures": string[]
+}
+
+Guidelines:
+- Provide accurate summary of the talk's main points
+- Extract meaningful quotes (paraphrased, not verbatim)
+- Focus on practical application
+- Keep a warm, respectful tone"""
+
+def length_guidance(length: str) -> str:
+    if length == "brief":
+        return "CRITICAL: Keep responses VERY concise. Overview and context: 1-2 sentences each. Summary: 2-3 sentences max. Lists: 2-3 items each."
+    if length == "deep":
+        return "CRITICAL: Provide COMPREHENSIVE analysis. Overview and context: 3-5 sentences each with rich detail. Summary: 6+ sentences with thorough exploration. Lists: 5-8 items each with depth."
+    return "Provide balanced detail. Overview and context: 2-3 sentences each. Summary: 3-5 sentences. Lists: 3-5 items each."
+
 # Scripture data - ALL 5 STANDARD WORKS
 CANONS = [
     {
@@ -151,6 +203,97 @@ def filter_talks():
         results = [t for t in results if t.get('month', '').lower() == month.lower()]
     
     return jsonify(results[:100])
+
+@app.route('/api/summarize/scripture', methods=['POST'])
+def summarize_scripture():
+    if not client:
+        return jsonify({"error": "OpenAI client not configured"}), 500
+    
+    try:
+        data = request.json
+        reference = data.get('reference', '').strip()
+        focus = data.get('focus', '').strip()
+        length = data.get('length', 'standard')
+        
+        if not reference:
+            return jsonify({"error": "No reference provided"}), 400
+        
+        user_prompt = (
+            BASE_PROMPT_SCRIPTURE
+            + "\n\nNow respond for:\n"
+            + f"REFERENCE: {reference}\n"
+            + f"FOCUS: {focus}\n"
+            + f"LENGTH REQUIREMENT: {length_guidance(length)}\n"
+            + "AUDIENCE: general\n"
+        )
+        
+        response = client.chat.completions.create(
+            model=MODEL,
+            temperature=0.2,
+            messages=[
+                {"role": "system", "content": "Return only a valid JSON object that matches the schema. No prose outside JSON."},
+                {"role": "user", "content": user_prompt}
+            ]
+        )
+        
+        text = response.choices[0].message.content
+        replacements = {"\u2019":"'","\u201C":'"',"\u201D":'"',"\u2013":"-","\u2014":"-"}
+        for k, v in replacements.items():
+            text = text.replace(k, v)
+        
+        result = json.loads(text)
+        return jsonify(result)
+        
+    except json.JSONDecodeError as e:
+        return jsonify({"error": f"Invalid JSON from AI: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/summarize/talk', methods=['POST'])
+def summarize_talk():
+    if not client:
+        return jsonify({"error": "OpenAI client not configured"}), 500
+    
+    try:
+        data = request.json
+        talk_title = data.get('title', '').strip()
+        talk_speaker = data.get('speaker', '').strip()
+        focus = data.get('focus', '').strip()
+        length = data.get('length', 'standard')
+        
+        if not talk_title:
+            return jsonify({"error": "No talk selected"}), 400
+        
+        context = f"Talk: {talk_title}\nSpeaker: {talk_speaker}"
+        
+        user_prompt = (
+            BASE_PROMPT_TALKS
+            + f"\n\n{context}\n"
+            + f"FOCUS: {focus}\n"
+            + f"LENGTH REQUIREMENT: {length_guidance(length)}\n"
+        )
+        
+        response = client.chat.completions.create(
+            model=MODEL,
+            temperature=0.2,
+            messages=[
+                {"role": "system", "content": "Return only a valid JSON object that matches the schema. No prose outside JSON."},
+                {"role": "user", "content": user_prompt}
+            ]
+        )
+        
+        text = response.choices[0].message.content
+        replacements = {"\u2019":"'","\u201C":'"',"\u201D":'"',"\u2013":"-","\u2014":"-"}
+        for k, v in replacements.items():
+            text = text.replace(k, v)
+        
+        result = json.loads(text)
+        return jsonify(result)
+        
+    except json.JSONDecodeError as e:
+        return jsonify({"error": f"Invalid JSON from AI: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/health')
 def health():
