@@ -1,4 +1,8 @@
-﻿from flask import Flask, render_template, request, jsonify
+﻿cd "C:\Users\paule\OneDrive\Desktop\Live The Word"
+
+# Create complete updated index.py
+@'
+from flask import Flask, render_template, request, jsonify
 import os
 import json
 import csv
@@ -115,9 +119,54 @@ def get_canons():
 def get_talks():
     return jsonify(TALKS)
 
+@app.route('/api/talks/search')
+def search_talks():
+    """Search talks by speaker or title"""
+    query = request.args.get('q', '').lower().strip()
+    if not query:
+        return jsonify(TALKS[:50])
+    
+    results = []
+    for talk in TALKS:
+        title = talk.get('title', '').lower()
+        speaker = talk.get('speaker', '').lower()
+        if query in title or query in speaker:
+            results.append(talk)
+    
+    return jsonify(results[:50])
+
+@app.route('/api/talks/years')
+def get_talk_years():
+    """Get unique years from talks"""
+    years = sorted(set(talk.get('year', '') for talk in TALKS if talk.get('year')), reverse=True)
+    return jsonify(years)
+
+@app.route('/api/talks/filter')
+def filter_talks():
+    """Filter talks by year and/or month"""
+    year = request.args.get('year', '').strip()
+    month = request.args.get('month', '').strip()
+    
+    results = TALKS
+    
+    if year:
+        results = [t for t in results if t.get('year', '') == year]
+    
+    if month:
+        results = [t for t in results if t.get('month', '').lower() == month.lower()]
+    
+    return jsonify(results[:100])
+
 @app.route('/api/health')
 def health():
     return jsonify({"status": "ok", "openai_configured": client is not None, "talks_loaded": len(TALKS)})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+'@ | Out-File -FilePath "api\index.py" -Encoding UTF8 -Force
+
+Write-Host "✅ Complete index.py updated with new API endpoints!" -ForegroundColor Green
+Write-Host "   Added routes:" -ForegroundColor Cyan
+Write-Host "   - /api/talks/search (search by speaker/title)" -ForegroundColor Cyan
+Write-Host "   - /api/talks/years (get all available years)" -ForegroundColor Cyan
+Write-Host "   - /api/talks/filter (filter by year/month)" -ForegroundColor Cyan
