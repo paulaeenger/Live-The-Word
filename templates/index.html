@@ -48,6 +48,8 @@
     .result p, .result li { line-height:1.6; }
     .error { background:#FEF2F2; border:1px solid #FEE2E2; color:#991B1B; padding:12px; border-radius:8px; margin-top:12px; display:none; }
     .error.show { display:block; }
+    .link-btn { display:inline-block; background:#0066cc; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:14px; margin:12px 0; }
+    .link-btn:hover { background:#0052a3; }
   </style>
 </head>
 <body>
@@ -140,6 +142,7 @@
   <script>
     let canons = [];
     let selectedTalk = null;
+    let currentScriptureRef = null;
     
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -247,7 +250,7 @@
       }
       
       resultsDiv.innerHTML = talks.map((talk, idx) => `
-        <div class="talk-item" data-title="${talk.title}" data-speaker="${talk.speaker}">
+        <div class="talk-item" data-title="${talk.title}" data-speaker="${talk.speaker}" data-url="${talk.url || ''}">
           <div class="talk-title">${talk.title}</div>
           <div class="talk-meta">${talk.speaker} • ${talk.month} ${talk.year}</div>
         </div>
@@ -261,14 +264,45 @@
           item.classList.add('selected');
           selectedTalk = {
             title: item.dataset.title,
-            speaker: item.dataset.speaker
+            speaker: item.dataset.speaker,
+            url: item.dataset.url
           };
           document.getElementById('talkAnalyzeBtn').disabled = false;
         });
       });
     }
 
-    // REAL Scripture Summary API Call
+    // Generate scripture URL
+    function getScriptureUrl(reference) {
+      const canonMap = {
+        'bom': 'bofm',
+        'ot': 'ot',
+        'nt': 'nt',
+        'dc': 'dc-testament',
+        'pgp': 'pgp'
+      };
+      
+      // Parse reference like "John 3" or "1 Nephi 3"
+      const parts = reference.trim().split(' ');
+      let book = '';
+      let chapter = '';
+      
+      if (parts.length >= 2) {
+        if (!isNaN(parts[0])) {
+          // Starts with number like "1 Nephi 3"
+          book = parts.slice(0, -1).join('-').toLowerCase();
+          chapter = parts[parts.length - 1];
+        } else {
+          // Like "John 3" or "Mosiah 2"
+          book = parts.slice(0, -1).join('-').toLowerCase();
+          chapter = parts[parts.length - 1];
+        }
+      }
+      
+      const canon = canonMap[canonSel.value] || 'nt';
+      return `https://www.churchofjesuschrist.org/study/scriptures/${canon}/${book}/${chapter}?lang=eng`;
+    }
+
     document.getElementById('scriptureBtn').addEventListener('click', async () => {
       const loader = document.getElementById('scriptureLoader');
       const error = document.getElementById('scriptureError');
@@ -278,6 +312,7 @@
       const book = document.getElementById('book').value;
       const chapter = document.getElementById('chapter').value;
       const reference = search || `${book} ${chapter}`;
+      currentScriptureRef = reference;
       const focus = document.getElementById('scriptureFocus').value.trim();
       const length = document.getElementById('scriptureLength').value;
       
@@ -307,7 +342,6 @@
       }
     });
 
-    // REAL Talk Analysis API Call
     document.getElementById('talkAnalyzeBtn').addEventListener('click', async () => {
       if (!selectedTalk) return;
       
@@ -350,8 +384,10 @@
 
     function displayScriptureResult(data) {
       const result = document.getElementById('scriptureResult');
+      const url = getScriptureUrl(currentScriptureRef);
       result.innerHTML = `
         <h2>${data.reference}</h2>
+        <a href="${url}" target="_blank" class="link-btn">📖 Read ${data.reference} on ChurchofJesusChrist.org</a>
         <h3>Overview</h3><p>${data.overview}</p>
         <h3>Historical Context</h3><p>${data.historical_context}</p>
         <h3>Summary</h3><p>${data.summary}</p>
@@ -366,9 +402,13 @@
 
     function displayTalkResult(data) {
       const result = document.getElementById('talkResult');
+      const talkUrl = selectedTalk.url ? `https://www.churchofjesuschrist.org${selectedTalk.url}` : '';
+      const linkHtml = talkUrl ? `<a href="${talkUrl}" target="_blank" class="link-btn">🎤 Read "${data.title}" on ChurchofJesusChrist.org</a>` : '';
+      
       result.innerHTML = `
         <h2>${data.title}</h2>
         <p><strong>Speaker:</strong> ${data.speaker}</p>
+        ${linkHtml}
         <h3>Summary</h3><p>${data.summary}</p>
         <h3>Key Messages</h3><ul>${data.key_messages.map(m => `<li>${m}</li>`).join('')}</ul>
         <h3>Quotes</h3><ul>${data.quotes.map(q => `<li>${q}</li>`).join('')}</ul>
