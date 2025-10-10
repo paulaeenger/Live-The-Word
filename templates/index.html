@@ -1,4 +1,5 @@
-﻿<!doctype html>
+﻿$htmlContent = @'
+<!doctype html>
 <html>
 <head>
   <meta charset="utf-8" />
@@ -43,13 +44,14 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .result { margin-top:16px; padding:20px; background:#fff; border:1px solid #e5e5e5; border-radius:8px; display:none; }
     .result.show { display:block; }
-    .result h2 { margin:0 0 12px; font-size:20px; }
+    .result h2 { margin:0 0 16px; font-size:20px; }
+    .result h2 a { color:#0066cc; text-decoration:none; }
+    .result h2 a:hover { text-decoration:underline; }
     .result h3 { margin:16px 0 8px; font-size:16px; }
     .result p, .result li { line-height:1.6; }
     .error { background:#FEF2F2; border:1px solid #FEE2E2; color:#991B1B; padding:12px; border-radius:8px; margin-top:12px; display:none; }
     .error.show { display:block; }
-    .link-btn { display:inline-block; background:#0066cc; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:14px; margin:12px 0; }
-    .link-btn:hover { background:#0052a3; }
+    .external-link { display:inline-block; margin-left:6px; font-size:14px; opacity:0.6; }
   </style>
 </head>
 <body>
@@ -58,12 +60,10 @@
       <h1>📖 Scripture & Conference Talk Study</h1>
       <p>Get AI-powered summaries and life applications for scriptures and general conference talks.</p>
     </header>
-
     <div class="tabs">
       <button class="tab active" data-tab="scriptures">Scriptures</button>
       <button class="tab" data-tab="talks">Conference Talks</button>
     </div>
-
     <div class="tab-content active" id="scriptures-content">
       <div class="card">
         <div class="grid g3">
@@ -90,60 +90,29 @@
         <div id="scriptureResult" class="result"></div>
       </div>
     </div>
-
     <div class="tab-content" id="talks-content">
       <div class="card">
         <div class="grid g3">
-          <div>
-            <label>Year</label>
-            <select id="talkYear"><option value="">All Years</option></select>
-          </div>
-          <div>
-            <label>Month</label>
-            <select id="talkMonth">
-              <option value="">All Months</option>
-              <option value="April">April</option>
-              <option value="October">October</option>
-            </select>
-          </div>
-          <div>
-            <label>Length</label>
-            <select id="talkLength">
-              <option value="brief">Brief</option>
-              <option value="standard" selected>Standard</option>
-              <option value="deep">Deep</option>
-            </select>
-          </div>
+          <div><label>Year</label><select id="talkYear"><option value="">All Years</option></select></div>
+          <div><label>Month</label><select id="talkMonth"><option value="">All Months</option><option value="April">April</option><option value="October">October</option></select></div>
+          <div><label>Length</label><select id="talkLength"><option value="brief">Brief</option><option value="standard" selected>Standard</option><option value="deep">Deep</option></select></div>
         </div>
-        <div style="margin-top:12px">
-          <label>Search by speaker or title (optional)</label>
-          <input id="talkSearch" placeholder='e.g., "Nelson" or "faith"'>
-        </div>
-        <div style="margin-top:12px">
-          <label>Focus (optional)</label>
-          <input id="talkFocus" placeholder="e.g., family relationships">
-        </div>
-        <div style="margin-top:12px">
-          <button id="talkFilterBtn" class="btn">Find Talks</button>
-        </div>
+        <div style="margin-top:12px"><label>Search by speaker or title (optional)</label><input id="talkSearch" placeholder='e.g., "Nelson" or "faith"'></div>
+        <div style="margin-top:12px"><label>Focus (optional)</label><input id="talkFocus" placeholder="e.g., family relationships"></div>
+        <div style="margin-top:12px"><button id="talkFilterBtn" class="btn">Find Talks</button></div>
         <div id="talkResults" class="talk-results"></div>
-        <div style="margin-top:16px">
-          <button id="talkAnalyzeBtn" class="btn" disabled>Analyze Selected Talk</button>
-        </div>
+        <div style="margin-top:16px"><button id="talkAnalyzeBtn" class="btn" disabled>Analyze Selected Talk</button></div>
         <div id="talkLoader" class="loader"><div class="spinner"></div> Analyzing talk...</div>
         <div id="talkError" class="error"></div>
         <div id="talkResult" class="result"></div>
       </div>
     </div>
-
     <div class="tip">💡 Tip: Use the scripture tab for chapter summaries or the talks tab to analyze conference addresses.</div>
   </div>
-
   <script>
     let canons = [];
     let selectedTalk = null;
     let currentScriptureRef = null;
-    
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -152,14 +121,12 @@
         document.getElementById(tab.dataset.tab + '-content').classList.add('active');
       });
     });
-
     fetch('/api/canons').then(r => r.json()).then(data => {
       canons = data;
       fillCanon();
       fillBooks();
       fillChapters();
     });
-
     fetch('/api/talks/years').then(r => r.json()).then(years => {
       const yearSelect = document.getElementById('talkYear');
       years.forEach(year => {
@@ -169,11 +136,9 @@
         yearSelect.appendChild(opt);
       });
     });
-
     const canonSel = document.getElementById('canon');
     const bookSel = document.getElementById('book');
     const chapSel = document.getElementById('chapter');
-
     function fillCanon() {
       canonSel.innerHTML = '';
       canons.forEach(c => {
@@ -184,7 +149,6 @@
       });
       canonSel.selectedIndex = 2;
     }
-
     function fillBooks() {
       const c = canons.find(x => x.key === canonSel.value);
       if (!c) return;
@@ -196,7 +160,6 @@
         bookSel.appendChild(opt);
       });
     }
-
     function fillChapters() {
       const c = canons.find(x => x.key === canonSel.value);
       if (!c) return;
@@ -210,54 +173,38 @@
         chapSel.appendChild(opt);
       }
     }
-
     canonSel.addEventListener('change', () => { fillBooks(); fillChapters(); });
     bookSel.addEventListener('change', fillChapters);
-
     document.getElementById('talkFilterBtn').addEventListener('click', async () => {
       const year = document.getElementById('talkYear').value;
       const month = document.getElementById('talkMonth').value;
       const search = document.getElementById('talkSearch').value.trim().toLowerCase();
-      
       try {
         let url = '/api/talks/filter?';
-        if (year) url += `year=${year}&`;
-        if (month) url += `month=${month}&`;
-        
+        if (year) url += 'year=' + year + '&';
+        if (month) url += 'month=' + month + '&';
         const response = await fetch(url);
         let talks = await response.json();
-        
         if (search) {
           talks = talks.filter(t => 
             t.title.toLowerCase().includes(search) || 
             t.speaker.toLowerCase().includes(search)
           );
         }
-        
         displayTalks(talks);
       } catch (err) {
         console.error('Failed to load talks:', err);
       }
     });
-
     function displayTalks(talks) {
       const resultsDiv = document.getElementById('talkResults');
-      
       if (talks.length === 0) {
         resultsDiv.innerHTML = '<div class="talk-item">No talks found. Try different filters.</div>';
         resultsDiv.classList.add('show');
         return;
       }
-      
-      resultsDiv.innerHTML = talks.map((talk, idx) => `
-        <div class="talk-item" data-title="${talk.title}" data-speaker="${talk.speaker}" data-url="${talk.url || ''}">
-          <div class="talk-title">${talk.title}</div>
-          <div class="talk-meta">${talk.speaker} • ${talk.month} ${talk.year}</div>
-        </div>
-      `).join('');
-      
+      resultsDiv.innerHTML = talks.map(talk => '<div class="talk-item" data-title="' + talk.title + '" data-speaker="' + talk.speaker + '" data-url="' + (talk.url || '') + '"><div class="talk-title">' + talk.title + '</div><div class="talk-meta">' + talk.speaker + ' • ' + talk.month + ' ' + talk.year + '</div></div>').join('');
       resultsDiv.classList.add('show');
-      
       resultsDiv.querySelectorAll('.talk-item').forEach(item => {
         item.addEventListener('click', () => {
           resultsDiv.querySelectorAll('.talk-item').forEach(i => i.classList.remove('selected'));
@@ -271,8 +218,6 @@
         });
       });
     }
-
-    // Generate scripture URL
     function getScriptureUrl(reference) {
       const canonMap = {
         'bom': 'bofm',
@@ -281,58 +226,45 @@
         'dc': 'dc-testament',
         'pgp': 'pgp'
       };
-      
-      // Parse reference like "John 3" or "1 Nephi 3"
       const parts = reference.trim().split(' ');
       let book = '';
       let chapter = '';
-      
       if (parts.length >= 2) {
         if (!isNaN(parts[0])) {
-          // Starts with number like "1 Nephi 3"
           book = parts.slice(0, -1).join('-').toLowerCase();
           chapter = parts[parts.length - 1];
         } else {
-          // Like "John 3" or "Mosiah 2"
           book = parts.slice(0, -1).join('-').toLowerCase();
           chapter = parts[parts.length - 1];
         }
       }
-      
       const canon = canonMap[canonSel.value] || 'nt';
-      return `https://www.churchofjesuschrist.org/study/scriptures/${canon}/${book}/${chapter}?lang=eng`;
+      return 'https://www.churchofjesuschrist.org/study/scriptures/' + canon + '/' + book + '/' + chapter + '?lang=eng';
     }
-
     document.getElementById('scriptureBtn').addEventListener('click', async () => {
       const loader = document.getElementById('scriptureLoader');
       const error = document.getElementById('scriptureError');
       const result = document.getElementById('scriptureResult');
-      
       const search = document.getElementById('scriptureSearch').value.trim();
       const book = document.getElementById('book').value;
       const chapter = document.getElementById('chapter').value;
-      const reference = search || `${book} ${chapter}`;
+      const reference = search || book + ' ' + chapter;
       currentScriptureRef = reference;
       const focus = document.getElementById('scriptureFocus').value.trim();
       const length = document.getElementById('scriptureLength').value;
-      
       loader.classList.add('show');
       error.classList.remove('show');
       result.classList.remove('show');
-      
       try {
         const response = await fetch('/api/summarize/scripture', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ reference, focus, length })
+          body: JSON.stringify({ reference: reference, focus: focus, length: length })
         });
-        
         const data = await response.json();
-        
         if (!response.ok) {
           throw new Error(data.error || 'Failed to generate summary');
         }
-        
         displayScriptureResult(data);
       } catch (err) {
         error.textContent = err.message;
@@ -341,20 +273,16 @@
         loader.classList.remove('show');
       }
     });
-
     document.getElementById('talkAnalyzeBtn').addEventListener('click', async () => {
       if (!selectedTalk) return;
-      
       const loader = document.getElementById('talkLoader');
       const error = document.getElementById('talkError');
       const result = document.getElementById('talkResult');
       const focus = document.getElementById('talkFocus').value.trim();
       const length = document.getElementById('talkLength').value;
-      
       loader.classList.add('show');
       error.classList.remove('show');
       result.classList.remove('show');
-      
       try {
         const response = await fetch('/api/summarize/talk', {
           method: 'POST',
@@ -362,17 +290,14 @@
           body: JSON.stringify({
             title: selectedTalk.title,
             speaker: selectedTalk.speaker,
-            focus,
-            length
+            focus: focus,
+            length: length
           })
         });
-        
         const data = await response.json();
-        
         if (!response.ok) {
           throw new Error(data.error || 'Failed to analyze talk');
         }
-        
         displayTalkResult(data);
       } catch (err) {
         error.textContent = err.message;
@@ -381,43 +306,23 @@
         loader.classList.remove('show');
       }
     });
-
     function displayScriptureResult(data) {
       const result = document.getElementById('scriptureResult');
       const url = getScriptureUrl(currentScriptureRef);
-      result.innerHTML = `
-        <h2>${data.reference}</h2>
-        <a href="${url}" target="_blank" class="link-btn">📖 Read ${data.reference} on ChurchofJesusChrist.org</a>
-        <h3>Overview</h3><p>${data.overview}</p>
-        <h3>Historical Context</h3><p>${data.historical_context}</p>
-        <h3>Summary</h3><p>${data.summary}</p>
-        <h3>Key Verses</h3><ul>${data.key_verses.map(v => `<li>${v}</li>`).join('')}</ul>
-        <h3>Themes</h3><ul>${data.themes.map(t => `<li>${t}</li>`).join('')}</ul>
-        <h3>Life Application</h3><ul>${data.life_application.map(a => `<li>${a}</li>`).join('')}</ul>
-        <h3>Reflection Questions</h3><ul>${data.reflection_questions.map(q => `<li>${q}</li>`).join('')}</ul>
-        <h3>Cross-References</h3><ul>${data.cross_references.map(c => `<li>${c}</li>`).join('')}</ul>
-      `;
+      result.innerHTML = '<h2><a href="' + url + '" target="_blank">' + data.reference + '<span class="external-link">↗</span></a></h2><h3>Overview</h3><p>' + data.overview + '</p><h3>Historical Context</h3><p>' + data.historical_context + '</p><h3>Summary</h3><p>' + data.summary + '</p><h3>Key Verses</h3><ul>' + data.key_verses.map(v => '<li>' + v + '</li>').join('') + '</ul><h3>Themes</h3><ul>' + data.themes.map(t => '<li>' + t + '</li>').join('') + '</ul><h3>Life Application</h3><ul>' + data.life_application.map(a => '<li>' + a + '</li>').join('') + '</ul><h3>Reflection Questions</h3><ul>' + data.reflection_questions.map(q => '<li>' + q + '</li>').join('') + '</ul><h3>Cross-References</h3><ul>' + data.cross_references.map(c => '<li>' + c + '</li>').join('') + '</ul>';
       result.classList.add('show');
     }
-
     function displayTalkResult(data) {
       const result = document.getElementById('talkResult');
-      const talkUrl = selectedTalk.url ? `https://www.churchofjesuschrist.org${selectedTalk.url}` : '';
-      const linkHtml = talkUrl ? `<a href="${talkUrl}" target="_blank" class="link-btn">🎤 Read "${data.title}" on ChurchofJesusChrist.org</a>` : '';
-      
-      result.innerHTML = `
-        <h2>${data.title}</h2>
-        <p><strong>Speaker:</strong> ${data.speaker}</p>
-        ${linkHtml}
-        <h3>Summary</h3><p>${data.summary}</p>
-        <h3>Key Messages</h3><ul>${data.key_messages.map(m => `<li>${m}</li>`).join('')}</ul>
-        <h3>Quotes</h3><ul>${data.quotes.map(q => `<li>${q}</li>`).join('')}</ul>
-        <h3>Life Application</h3><ul>${data.life_application.map(a => `<li>${a}</li>`).join('')}</ul>
-        <h3>Reflection Questions</h3><ul>${data.reflection_questions.map(q => `<li>${q}</li>`).join('')}</ul>
-        <h3>Related Scriptures</h3><ul>${data.related_scriptures.map(s => `<li>${s}</li>`).join('')}</ul>
-      `;
+      const talkUrl = selectedTalk.url ? 'https://www.churchofjesuschrist.org' + selectedTalk.url : '';
+      const titleHtml = talkUrl ? '<h2><a href="' + talkUrl + '" target="_blank">' + data.title + '<span class="external-link">↗</span></a></h2>' : '<h2>' + data.title + '</h2>';
+      result.innerHTML = titleHtml + '<p><strong>Speaker:</strong> ' + data.speaker + '</p><h3>Summary</h3><p>' + data.summary + '</p><h3>Key Messages</h3><ul>' + data.key_messages.map(m => '<li>' + m + '</li>').join('') + '</ul><h3>Quotes</h3><ul>' + data.quotes.map(q => '<li>' + q + '</li>').join('') + '</ul><h3>Life Application</h3><ul>' + data.life_application.map(a => '<li>' + a + '</li>').join('') + '</ul><h3>Reflection Questions</h3><ul>' + data.reflection_questions.map(q => '<li>' + q + '</li>').join('') + '</ul><h3>Related Scriptures</h3><ul>' + data.related_scriptures.map(s => '<li>' + s + '</li>').join('') + '</ul>';
       result.classList.add('show');
     }
   </script>
 </body>
 </html>
+'@
+
+$htmlContent | Out-File -FilePath "templates\index.html" -Encoding UTF8 -Force
+Write-Host "✅ HTML file updated with clickable headings!" -ForegroundColor Green
