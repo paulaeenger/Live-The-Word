@@ -28,7 +28,25 @@
     @media (max-width: 720px) { .g2, .g3 { grid-template-columns: 1fr; } }
     .btn { background:#111; color:#fff; padding:12px 24px; border:0; border-radius:8px; cursor:pointer; font-size:15px; font-weight:600; width:100%; }
     .btn:hover { background:#333; }
+    .btn:disabled { opacity:0.5; cursor:not-allowed; }
     .tip { background:#FEF9E7; border-left:4px solid #F39C12; padding:12px 16px; margin-top:16px; border-radius:4px; font-size:13px; color:#7D6608; }
+    .talk-results { max-height:300px; overflow-y:auto; border:1px solid #e5e5e5; border-radius:8px; margin-top:12px; display:none; }
+    .talk-results.show { display:block; }
+    .talk-item { padding:12px; cursor:pointer; border-bottom:1px solid #f0f0f0; }
+    .talk-item:hover { background:#f9f9f9; }
+    .talk-item.selected { background:#e3f2fd; }
+    .talk-title { font-weight:500; font-size:14px; color:#111; }
+    .talk-meta { font-size:12px; color:#666; margin-top:4px; }
+    .loader { display:none; text-align:center; padding:20px; color:#666; }
+    .loader.show { display:block; }
+    .spinner { width:20px; height:20px; border:3px solid #ddd; border-top-color:#111; border-radius:50%; animation: spin 1s linear infinite; display:inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .result { margin-top:16px; padding:20px; background:#fff; border:1px solid #e5e5e5; border-radius:8px; display:none; }
+    .result.show { display:block; }
+    .result h3 { margin:16px 0 8px; font-size:16px; }
+    .result p, .result li { line-height:1.6; }
+    .error { background:#FEF2F2; border:1px solid #FEE2E2; color:#991B1B; padding:12px; border-radius:8px; margin-top:12px; display:none; }
+    .error.show { display:block; }
   </style>
 </head>
 <body>
@@ -43,6 +61,7 @@
       <button class="tab" data-tab="talks">Conference Talks</button>
     </div>
 
+    <!-- Scripture Tab -->
     <div class="tab-content active" id="scriptures-content">
       <div class="card">
         <div class="grid g3">
@@ -64,16 +83,57 @@
         <div style="margin-top:16px">
           <button id="scriptureBtn" class="btn">Get Scripture Summary</button>
         </div>
+        <div id="scriptureLoader" class="loader"><div class="spinner"></div> Generating summary...</div>
+        <div id="scriptureError" class="error"></div>
+        <div id="scriptureResult" class="result"></div>
       </div>
     </div>
 
+    <!-- Conference Talks Tab -->
     <div class="tab-content" id="talks-content">
       <div class="card">
-        <div><label>Search for a talk (speaker or title)</label><input id="talkSearch" placeholder='e.g., "Nelson" or "faith"'></div>
-        <div style="margin-top:16px"><label>Focus (optional)</label><input id="talkFocus" placeholder="e.g., family relationships"></div>
-        <div style="margin-top:16px">
-          <button id="talkBtn" class="btn">Analyze Talk</button>
+        <div class="grid g3">
+          <div>
+            <label>Year</label>
+            <select id="talkYear">
+              <option value="">All Years</option>
+            </select>
+          </div>
+          <div>
+            <label>Month</label>
+            <select id="talkMonth">
+              <option value="">All Months</option>
+              <option value="April">April</option>
+              <option value="October">October</option>
+            </select>
+          </div>
+          <div>
+            <label>Length</label>
+            <select id="talkLength">
+              <option value="brief">Brief</option>
+              <option value="standard" selected>Standard</option>
+              <option value="deep">Deep</option>
+            </select>
+          </div>
         </div>
+        <div style="margin-top:12px">
+          <label>Search by speaker or title (optional)</label>
+          <input id="talkSearch" placeholder='e.g., "Nelson" or "faith"'>
+        </div>
+        <div style="margin-top:12px">
+          <label>Focus (optional)</label>
+          <input id="talkFocus" placeholder="e.g., family relationships">
+        </div>
+        <div style="margin-top:12px">
+          <button id="talkFilterBtn" class="btn">Find Talks</button>
+        </div>
+        <div id="talkResults" class="talk-results"></div>
+        <div style="margin-top:16px">
+          <button id="talkAnalyzeBtn" class="btn" disabled>Analyze Selected Talk</button>
+        </div>
+        <div id="talkLoader" class="loader"><div class="spinner"></div> Analyzing talk...</div>
+        <div id="talkError" class="error"></div>
+        <div id="talkResult" class="result"></div>
       </div>
     </div>
 
@@ -82,7 +142,9 @@
 
   <script>
     let canons = [];
+    let selectedTalk = null;
     
+    // Tab switching
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -92,11 +154,23 @@
       });
     });
 
+    // Load scripture data
     fetch('/api/canons').then(r => r.json()).then(data => {
       canons = data;
       fillCanon();
       fillBooks();
       fillChapters();
+    });
+
+    // Load talk years
+    fetch('/api/talks/years').then(r => r.json()).then(years => {
+      const yearSelect = document.getElementById('talkYear');
+      years.forEach(year => {
+        const opt = document.createElement('option');
+        opt.value = year;
+        opt.textContent = year;
+        yearSelect.appendChild(opt);
+      });
     });
 
     const canonSel = document.getElementById('canon');
@@ -143,12 +217,100 @@
     canonSel.addEventListener('change', () => { fillBooks(); fillChapters(); });
     bookSel.addEventListener('change', fillChapters);
 
-    document.getElementById('scriptureBtn').addEventListener('click', () => {
-      alert('Scripture summary coming soon! Need to add OpenAI API key to Vercel.');
+    // Talk filtering
+    document.getElementById('talkFilterBtn').addEventListener('click', async () => {
+      const year = document.getElementById('talkYear').value;
+      const month = document.getElementById('talkMonth').value;
+      const search = document.getElementById('talkSearch').value.trim().toLowerCase();
+      
+      try {
+        let url = '/api/talks/filter?';
+        if (year) url += `year=${year}&`;
+        if (month) url += `month=${month}&`;
+        
+        const response = await fetch(url);
+        let talks = await response.json();
+        
+        if (search) {
+          talks = talks.filter(t => 
+            t.title.toLowerCase().includes(search) || 
+            t.speaker.toLowerCase().includes(search)
+          );
+        }
+        
+        displayTalks(talks);
+      } catch (err) {
+        console.error('Failed to load talks:', err);
+      }
     });
 
-    document.getElementById('talkBtn').addEventListener('click', () => {
-      alert('Talk analysis coming soon!');
+    function displayTalks(talks) {
+      const resultsDiv = document.getElementById('talkResults');
+      
+      if (talks.length === 0) {
+        resultsDiv.innerHTML = '<div class="talk-item">No talks found. Try different filters.</div>';
+        resultsDiv.classList.add('show');
+        return;
+      }
+      
+      resultsDiv.innerHTML = talks.map((talk, idx) => `
+        <div class="talk-item" data-index="${idx}" data-title="${talk.title}" data-speaker="${talk.speaker}" data-url="${talk.url || ''}" data-year="${talk.year}">
+          <div class="talk-title">${talk.title}</div>
+          <div class="talk-meta">${talk.speaker} • ${talk.month} ${talk.year}</div>
+        </div>
+      `).join('');
+      
+      resultsDiv.classList.add('show');
+      
+      resultsDiv.querySelectorAll('.talk-item').forEach(item => {
+        item.addEventListener('click', () => {
+          resultsDiv.querySelectorAll('.talk-item').forEach(i => i.classList.remove('selected'));
+          item.classList.add('selected');
+          selectedTalk = {
+            title: item.dataset.title,
+            speaker: item.dataset.speaker,
+            url: item.dataset.url,
+            year: item.dataset.year
+          };
+          document.getElementById('talkAnalyzeBtn').disabled = false;
+        });
+      });
+    }
+
+    // Scripture summary - PLACEHOLDER (API endpoint not implemented yet)
+    document.getElementById('scriptureBtn').addEventListener('click', async () => {
+      const loader = document.getElementById('scriptureLoader');
+      const error = document.getElementById('scriptureError');
+      const result = document.getElementById('scriptureResult');
+      
+      loader.classList.add('show');
+      error.classList.remove('show');
+      result.classList.remove('show');
+      
+      setTimeout(() => {
+        loader.classList.remove('show');
+        error.textContent = 'Scripture summary API endpoint not yet implemented. Coming soon!';
+        error.classList.add('show');
+      }, 1000);
+    });
+
+    // Talk analysis - PLACEHOLDER (API endpoint not implemented yet)
+    document.getElementById('talkAnalyzeBtn').addEventListener('click', async () => {
+      if (!selectedTalk) return;
+      
+      const loader = document.getElementById('talkLoader');
+      const error = document.getElementById('talkError');
+      const result = document.getElementById('talkResult');
+      
+      loader.classList.add('show');
+      error.classList.remove('show');
+      result.classList.remove('show');
+      
+      setTimeout(() => {
+        loader.classList.remove('show');
+        error.textContent = 'Talk analysis API endpoint not yet implemented. Coming soon!';
+        error.classList.add('show');
+      }, 1000);
     });
   </script>
 </body>
