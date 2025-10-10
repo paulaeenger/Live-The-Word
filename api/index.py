@@ -1,8 +1,4 @@
-﻿cd "C:\Users\paule\OneDrive\Desktop\Live The Word"
-
-# Create complete updated index.py
-@'
-from flask import Flask, render_template, request, jsonify
+﻿from flask import Flask, render_template, request, jsonify
 import os
 import json
 import csv
@@ -91,6 +87,7 @@ CANONS = [
 ]
 
 TALKS = []
+
 def load_talks():
     global TALKS
     try:
@@ -101,6 +98,7 @@ def load_talks():
                 TALKS = list(reader)
     except Exception as e:
         print(f"Error loading talks: {e}")
+        TALKS = []
 
 load_talks()
 
@@ -121,7 +119,6 @@ def get_talks():
 
 @app.route('/api/talks/search')
 def search_talks():
-    """Search talks by speaker or title"""
     query = request.args.get('q', '').lower().strip()
     if not query:
         return jsonify(TALKS[:50])
@@ -137,13 +134,11 @@ def search_talks():
 
 @app.route('/api/talks/years')
 def get_talk_years():
-    """Get unique years from talks"""
     years = sorted(set(talk.get('year', '') for talk in TALKS if talk.get('year')), reverse=True)
     return jsonify(years)
 
 @app.route('/api/talks/filter')
 def filter_talks():
-    """Filter talks by year and/or month"""
     year = request.args.get('year', '').strip()
     month = request.args.get('month', '').strip()
     
@@ -159,14 +154,11 @@ def filter_talks():
 
 @app.route('/api/health')
 def health():
-    return jsonify({"status": "ok", "openai_configured": client is not None, "talks_loaded": len(TALKS)})
+    return jsonify({
+        "status": "ok", 
+        "openai_configured": client is not None, 
+        "talks_loaded": len(TALKS)
+    })
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
-'@ | Out-File -FilePath "api\index.py" -Encoding UTF8 -Force
-
-Write-Host "✅ Complete index.py updated with new API endpoints!" -ForegroundColor Green
-Write-Host "   Added routes:" -ForegroundColor Cyan
-Write-Host "   - /api/talks/search (search by speaker/title)" -ForegroundColor Cyan
-Write-Host "   - /api/talks/years (get all available years)" -ForegroundColor Cyan
-Write-Host "   - /api/talks/filter (filter by year/month)" -ForegroundColor Cyan
