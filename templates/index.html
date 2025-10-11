@@ -5,11 +5,34 @@
   <title>Scripture & Conference Talk Study</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    :root { color-scheme: light; }
+    :root {
+      --bg-primary: #f9f9f9;
+      --bg-secondary: #fff;
+      --text-primary: #111;
+      --text-secondary: #555;
+      --text-tertiary: #666;
+      --border-color: #e5e5e5;
+      --border-light: #ddd;
+      --btn-bg: #111;
+      --btn-hover: #333;
+      --link-color: #0066cc;
+    }
+    [data-theme="dark"] {
+      --bg-primary: #1a1a1a;
+      --bg-secondary: #2d2d2d;
+      --text-primary: #e5e5e5;
+      --text-secondary: #b0b0b0;
+      --text-tertiary: #999;
+      --border-color: #404040;
+      --border-light: #4a4a4a;
+      --btn-bg: #e5e5e5;
+      --btn-hover: #fff;
+      --link-color: #5ba3ff;
+    }
     * { box-sizing: border-box; }
-    body { font-family: system-ui, sans-serif; margin:0; background:#f9f9f9; color:#111; }
+    body { font-family: system-ui, sans-serif; margin:0; background:var(--bg-primary); color:var(--text-primary); transition: background 0.3s; }
     .wrap { max-width: 920px; margin: 0 auto; padding: 24px; }
-    header { margin-bottom: 20px; background:#fff; padding:20px; border-radius:14px; }
+    header { margin-bottom: 20px; background:var(--bg-secondary); padding:20px; border-radius:14px; position:relative; }
     header h1 { font-size: 28px; margin: 0 0 6px; }
     header p { color:#555; margin:0; }
     .tabs { display:flex; gap:0; margin-bottom:0; background:#fff; padding:0; border-radius:14px 14px 0 0; border-bottom:1px solid #e5e5e5; }
@@ -18,16 +41,16 @@
     .tab.active { border-bottom-color:#111; color:#111; font-weight:600; }
     .tab-content { display:none; }
     .tab-content.active { display:block; }
-    .card { border:1px solid #e5e5e5; border-radius:0 0 14px 14px; padding:24px; background:#fff; }
+    .card { border:1px solid var(--border-color); border-radius:0 0 14px 14px; padding:24px; background:var(--bg-secondary); }
     label { font-size:13px; color:#555; display:block; margin-bottom:6px; font-weight:500; }
-    input, select { width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:8px; font-size:14px; background:#fff; color:#111; }
+    input, select { width:100%; padding:10px 12px; border:1px solid var(--border-light); border-radius:8px; font-size:14px; background:var(--bg-secondary); color:var(--text-primary); }
     select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; -webkit-appearance: none; padding-right: 32px; cursor: pointer; }
     .grid { display:grid; gap:12px; }
     .g2 { grid-template-columns: repeat(2, 1fr); }
     .g3 { grid-template-columns: repeat(3, 1fr); }
     @media (max-width: 720px) { .g2, .g3 { grid-template-columns: 1fr; } }
-    .btn { background:#111; color:#fff; padding:12px 24px; border:0; border-radius:8px; cursor:pointer; font-size:15px; font-weight:600; width:100%; }
-    .btn:hover { background:#333; }
+    .btn { background:var(--btn-bg); color:var(--bg-secondary); padding:12px 24px; border:0; border-radius:8px; cursor:pointer; font-size:15px; font-weight:600; width:100%; }
+    .btn:hover { background:var(--btn-hover); }
     .btn:disabled { opacity:0.5; cursor:not-allowed; }
     .tip { background:#FEF9E7; border-left:4px solid #F39C12; padding:12px 16px; margin-top:16px; border-radius:4px; font-size:13px; color:#7D6608; }
     .talk-results { max-height:300px; overflow-y:auto; border:1px solid #e5e5e5; border-radius:8px; margin-top:12px; display:none; }
@@ -53,11 +76,24 @@
     .error { background:#FEF2F2; border:1px solid #FEE2E2; color:#991B1B; padding:12px; border-radius:8px; margin-top:12px; display:none; }
     .error.show { display:block; }
     .external-link { display:inline-block; margin-left:6px; font-size:14px; opacity:0.6; }
+    .theme-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <header>
+    <header><button class="theme-toggle" onclick="toggleTheme()"><span id="theme-text">Dark</span></button>
       <h1>📖 Scripture & Conference Talk Study</h1>
       <p>Summaries and life applications for scriptures and general conference talks.</p>
     </header>
@@ -381,6 +417,23 @@
       result.innerHTML = titleHtml + '<p><strong>Speaker:</strong> ' + data.speaker + '</p><h3>Summary</h3><p>' + linkifyScriptures(data.summary) + '</p><h3>Key Messages</h3><ul>' + data.key_messages.map(m => '<li>' + linkifyScriptures(m) + '</li>').join('') + '</ul><h3>Quotes</h3><ul>' + data.quotes.map(q => '<li>' + linkifyScriptures(q) + '</li>').join('') + '</ul><h3>Life Application</h3><ul>' + data.life_application.map(a => '<li>' + linkifyScriptures(a) + '</li>').join('') + '</ul><h3>Reflection Questions</h3><ul>' + data.reflection_questions.map(q => '<li>' + linkifyScriptures(q) + '</li>').join('') + '</ul><h3>Related Scriptures</h3><ul>' + data.related_scriptures.map(s => '<li>' + linkifyScriptures(s) + '</li>').join('') + '</ul>';
       result.classList.add('show');
     }
+  </script>
+<script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      const text = document.getElementById('theme-text');
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      text.textContent = newTheme === 'dark' ? 'Light' : 'Dark';
+    }
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      const text = document.getElementById('theme-text');
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      if (text) text.textContent = savedTheme === 'dark' ? 'Light' : 'Dark';
+    })();
   </script>
 </body>
 </html>
