@@ -375,7 +375,7 @@
     
     function displayTalkResult(data) {
       const result = document.getElementById('talkResult');
-      const talkUrl = selectedTalk.url ? 'https://www.churchofjesuschrist.org' + selectedTalk.url : '';
+      const talkUrl = selectedTalk.url || '';
       const titleHtml = talkUrl ? '<h2><a href="' + talkUrl + '" target="_blank">' + data.title + '<span class="external-link">↗</span></a></h2>' : '<h2>' + data.title + '</h2>';
       
       result.innerHTML = titleHtml + '<p><strong>Speaker:</strong> ' + data.speaker + '</p><h3>Summary</h3><p>' + linkifyScriptures(data.summary) + '</p><h3>Key Messages</h3><ul>' + data.key_messages.map(m => '<li>' + linkifyScriptures(m) + '</li>').join('') + '</ul><h3>Quotes</h3><ul>' + data.quotes.map(q => '<li>' + linkifyScriptures(q) + '</li>').join('') + '</ul><h3>Life Application</h3><ul>' + data.life_application.map(a => '<li>' + linkifyScriptures(a) + '</li>').join('') + '</ul><h3>Reflection Questions</h3><ul>' + data.reflection_questions.map(q => '<li>' + linkifyScriptures(q) + '</li>').join('') + '</ul><h3>Related Scriptures</h3><ul>' + data.related_scriptures.map(s => '<li>' + linkifyScriptures(s) + '</li>').join('') + '</ul>';
