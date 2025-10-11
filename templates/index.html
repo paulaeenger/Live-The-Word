@@ -124,7 +124,7 @@
     };
     
     function linkifyScriptures(text) {
-      const pattern = /\b((?:1|2|3)?\s*(?:Nephi|Samuel|Kings|Chronicles|Corinthians|Thessalonians|Timothy|Peter|John)|Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|Ezra|Nehemiah|Esther|Job|Psalms|Proverbs|Ecclesiastes|Song of Solomon|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Matthew|Mark|Luke|John|Acts|Romans|Galatians|Ephesians|Philippians|Colossians|Titus|Philemon|Hebrews|James|Jude|Revelation|Jacob|Enos|Jarom|Omni|Words of Mormon|Mosiah|Alma|Helaman|Mormon|Ether|Moroni|D&C|Doctrine and Covenants|Moses|Abraham|Joseph Smith-Matthew|Joseph Smith-History|Articles of Faith)\s+(\d+)(?::(\d+)(?:-(\d+))?)?/gi;
+      const pattern = /\b((?:1|2|3)?\s*(?:Nephi|Samuel|Kings|Chronicles|Corinthians|Thessalonians|Timothy|Peter|John)|Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|Ezra|Nehemiah|Esther|Job|Psalms?|Proverbs|Ecclesiastes|Song of Solomon|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Matthew|Mark|Luke|John|Acts|Romans|Galatians|Ephesians|Philippians|Colossians|Titus|Philemon|Hebrews|James|Jude|Revelation|Jacob|Enos|Jarom|Omni|Words of Mormon|Mosiah|Alma|Helaman|Mormon|Ether|Moroni|D&C|Doctrine and Covenants|Moses|Abraham|Joseph Smith-Matthew|Joseph Smith-History|Articles of Faith)\s+(\d+)(?::(\d+)(?:-(\d+))?)?/gi;
       
       return text.replace(pattern, (match, book, chapter, verseStart, verseEnd) => {
         book = book.trim();
