@@ -1,1 +1,386 @@
-﻿
+﻿<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Scripture & Conference Talk Study</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; margin:0; background:#f9f9f9; color:#111; }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 24px; }
+    header { margin-bottom: 20px; background:#fff; padding:20px; border-radius:14px; }
+    header h1 { font-size: 28px; margin: 0 0 6px; }
+    header p { color:#555; margin:0; }
+    .tabs { display:flex; gap:0; margin-bottom:0; background:#fff; padding:0; border-radius:14px 14px 0 0; border-bottom:1px solid #e5e5e5; }
+    .tab { padding:16px 32px; border:none; background:transparent; cursor:pointer; font-size:15px; border-bottom:3px solid transparent; color:#666; }
+    .tab:hover { background:#f9f9f9; }
+    .tab.active { border-bottom-color:#111; color:#111; font-weight:600; }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+    .card { border:1px solid #e5e5e5; border-radius:0 0 14px 14px; padding:24px; background:#fff; }
+    label { font-size:13px; color:#555; display:block; margin-bottom:6px; font-weight:500; }
+    input, select { width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:8px; font-size:14px; background:#fff; color:#111; }
+    select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; -webkit-appearance: none; padding-right: 32px; cursor: pointer; }
+    .grid { display:grid; gap:12px; }
+    .g2 { grid-template-columns: repeat(2, 1fr); }
+    .g3 { grid-template-columns: repeat(3, 1fr); }
+    @media (max-width: 720px) { .g2, .g3 { grid-template-columns: 1fr; } }
+    .btn { background:#111; color:#fff; padding:12px 24px; border:0; border-radius:8px; cursor:pointer; font-size:15px; font-weight:600; width:100%; }
+    .btn:hover { background:#333; }
+    .btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .tip { background:#FEF9E7; border-left:4px solid #F39C12; padding:12px 16px; margin-top:16px; border-radius:4px; font-size:13px; color:#7D6608; }
+    .talk-results { max-height:300px; overflow-y:auto; border:1px solid #e5e5e5; border-radius:8px; margin-top:12px; display:none; }
+    .talk-results.show { display:block; }
+    .talk-item { padding:12px; cursor:pointer; border-bottom:1px solid #f0f0f0; }
+    .talk-item:hover { background:#f9f9f9; }
+    .talk-item.selected { background:#e3f2fd; }
+    .talk-title { font-weight:500; font-size:14px; color:#111; }
+    .talk-meta { font-size:12px; color:#666; margin-top:4px; }
+    .loader { display:none; text-align:center; padding:20px; color:#666; }
+    .loader.show { display:block; }
+    .spinner { width:20px; height:20px; border:3px solid #ddd; border-top-color:#111; border-radius:50%; animation: spin 1s linear infinite; display:inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .result { margin-top:16px; padding:20px; background:#fff; border:1px solid #e5e5e5; border-radius:8px; display:none; }
+    .result.show { display:block; }
+    .result h2 { margin:0 0 16px; font-size:20px; }
+    .result h2 a { color:#0066cc; text-decoration:none; }
+    .result h2 a:hover { text-decoration:underline; }
+    .result h3 { margin:16px 0 8px; font-size:16px; }
+    .result p, .result li { line-height:1.6; }
+    .result li a { color:#0066cc; text-decoration:none; }
+    .result li a:hover { text-decoration:underline; }
+    .error { background:#FEF2F2; border:1px solid #FEE2E2; color:#991B1B; padding:12px; border-radius:8px; margin-top:12px; display:none; }
+    .error.show { display:block; }
+    .external-link { display:inline-block; margin-left:6px; font-size:14px; opacity:0.6; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>📖 Scripture & Conference Talk Study</h1>
+      <p>Get AI-powered summaries and life applications for scriptures and general conference talks.</p>
+    </header>
+    <div class="tabs">
+      <button class="tab active" data-tab="scriptures">Scriptures</button>
+      <button class="tab" data-tab="talks">Conference Talks</button>
+    </div>
+    <div class="tab-content active" id="scriptures-content">
+      <div class="card">
+        <div class="grid g3">
+          <div><label>Scripture set</label><select id="canon"></select></div>
+          <div><label>Book</label><select id="book"></select></div>
+          <div><label>Chapter</label><select id="chapter"></select></div>
+        </div>
+        <div class="grid g3" style="margin-top:12px">
+          <div><label>Or search (theme or range)</label><input id="scriptureSearch" placeholder='e.g., "charity" or "Mosiah 2-5"'></div>
+          <div><label>Focus (optional)</label><input id="scriptureFocus" placeholder="e.g., overcoming doubt"></div>
+          <div><label>Length</label>
+            <select id="scriptureLength">
+              <option value="brief">Brief</option>
+              <option value="standard" selected>Standard</option>
+              <option value="deep">Deep</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <button id="scriptureBtn" class="btn">Get Scripture Summary</button>
+        </div>
+        <div id="scriptureLoader" class="loader"><div class="spinner"></div> Generating summary...</div>
+        <div id="scriptureError" class="error"></div>
+        <div id="scriptureResult" class="result"></div>
+      </div>
+    </div>
+    <div class="tab-content" id="talks-content">
+      <div class="card">
+        <div class="grid g3">
+          <div><label>Year</label><select id="talkYear"><option value="">All Years</option></select></div>
+          <div><label>Month</label><select id="talkMonth"><option value="">All Months</option><option value="April">April</option><option value="October">October</option></select></div>
+          <div><label>Length</label><select id="talkLength"><option value="brief">Brief</option><option value="standard" selected>Standard</option><option value="deep">Deep</option></select></div>
+        </div>
+        <div style="margin-top:12px"><label>Search by speaker or title (optional)</label><input id="talkSearch" placeholder='e.g., "Nelson" or "faith"'></div>
+        <div style="margin-top:12px"><label>Focus (optional)</label><input id="talkFocus" placeholder="e.g., family relationships"></div>
+        <div style="margin-top:12px"><button id="talkFilterBtn" class="btn">Find Talks</button></div>
+        <div id="talkResults" class="talk-results"></div>
+        <div style="margin-top:16px"><button id="talkAnalyzeBtn" class="btn" disabled>Analyze Selected Talk</button></div>
+        <div id="talkLoader" class="loader"><div class="spinner"></div> Analyzing talk...</div>
+        <div id="talkError" class="error"></div>
+        <div id="talkResult" class="result"></div>
+      </div>
+    </div>
+    <div class="tip">💡 Tip: Use the scripture tab for chapter summaries or the talks tab to analyze conference addresses.</div>
+  </div>
+  <script>
+    let canons = [];
+    let selectedTalk = null;
+    let currentScriptureRef = null;
+    
+    const SCRIPTURE_BOOKS = {
+      'Genesis':['ot','genesis'],'Exodus':['ot','exodus'],'Leviticus':['ot','leviticus'],'Numbers':['ot','numbers'],'Deuteronomy':['ot','deuteronomy'],'Joshua':['ot','joshua'],'Judges':['ot','judges'],'Ruth':['ot','ruth'],'1 Samuel':['ot','1-sam'],'2 Samuel':['ot','2-sam'],'1 Kings':['ot','1-kgs'],'2 Kings':['ot','2-kgs'],'1 Chronicles':['ot','1-chr'],'2 Chronicles':['ot','2-chr'],'Ezra':['ot','ezra'],'Nehemiah':['ot','neh'],'Esther':['ot','esth'],'Job':['ot','job'],'Psalms':['ot','ps'],'Proverbs':['ot','prov'],'Ecclesiastes':['ot','eccl'],'Song of Solomon':['ot','song'],'Isaiah':['ot','isa'],'Jeremiah':['ot','jer'],'Lamentations':['ot','lam'],'Ezekiel':['ot','ezek'],'Daniel':['ot','dan'],'Hosea':['ot','hosea'],'Joel':['ot','joel'],'Amos':['ot','amos'],'Obadiah':['ot','obad'],'Jonah':['ot','jonah'],'Micah':['ot','micah'],'Nahum':['ot','nahum'],'Habakkuk':['ot','hab'],'Zephaniah':['ot','zeph'],'Haggai':['ot','hag'],'Zechariah':['ot','zech'],'Malachi':['ot','mal'],
+      'Matthew':['nt','matthew'],'Mark':['nt','mark'],'Luke':['nt','luke'],'John':['nt','john'],'Acts':['nt','acts'],'Romans':['nt','rom'],'1 Corinthians':['nt','1-cor'],'2 Corinthians':['nt','2-cor'],'Galatians':['nt','gal'],'Ephesians':['nt','eph'],'Philippians':['nt','philip'],'Colossians':['nt','col'],'1 Thessalonians':['nt','1-thes'],'2 Thessalonians':['nt','2-thes'],'1 Timothy':['nt','1-tim'],'2 Timothy':['nt','2-tim'],'Titus':['nt','titus'],'Philemon':['nt','philem'],'Hebrews':['nt','heb'],'James':['nt','james'],'1 Peter':['nt','1-pet'],'2 Peter':['nt','2-pet'],'1 John':['nt','1-jn'],'2 John':['nt','2-jn'],'3 John':['nt','3-jn'],'Jude':['nt','jude'],'Revelation':['nt','rev'],
+      '1 Nephi':['bofm','1-ne'],'2 Nephi':['bofm','2-ne'],'Jacob':['bofm','jacob'],'Enos':['bofm','enos'],'Jarom':['bofm','jarom'],'Omni':['bofm','omni'],'Words of Mormon':['bofm','w-of-m'],'Mosiah':['bofm','mosiah'],'Alma':['bofm','alma'],'Helaman':['bofm','hel'],'3 Nephi':['bofm','3-ne'],'4 Nephi':['bofm','4-ne'],'Mormon':['bofm','morm'],'Ether':['bofm','ether'],'Moroni':['bofm','moro'],
+      'Doctrine and Covenants':['dc-testament','dc'],'D&C':['dc-testament','dc'],
+      'Moses':['pgp','moses'],'Abraham':['pgp','abr'],'Joseph Smith-Matthew':['pgp','js-m'],'Joseph Smith-History':['pgp','js-h'],'Articles of Faith':['pgp','a-of-f']
+    };
+    
+    function linkifyScriptures(text) {
+      const pattern = /\b((?:1|2|3)?\s*(?:Nephi|Samuel|Kings|Chronicles|Corinthians|Thessalonians|Timothy|Peter|John)|Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|Ezra|Nehemiah|Esther|Job|Psalms|Proverbs|Ecclesiastes|Song of Solomon|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Matthew|Mark|Luke|John|Acts|Romans|Galatians|Ephesians|Philippians|Colossians|Titus|Philemon|Hebrews|James|Jude|Revelation|Jacob|Enos|Jarom|Omni|Words of Mormon|Mosiah|Alma|Helaman|Mormon|Ether|Moroni|D&C|Doctrine and Covenants|Moses|Abraham|Joseph Smith-Matthew|Joseph Smith-History|Articles of Faith)\s+(\d+)(?::(\d+)(?:-(\d+))?)?/gi;
+      
+      return text.replace(pattern, (match, book, chapter, verseStart, verseEnd) => {
+        book = book.trim();
+        const bookData = SCRIPTURE_BOOKS[book];
+        if (!bookData) return match;
+        
+        const [canon, bookSlug] = bookData;
+        const url = 'https://www.churchofjesuschrist.org/study/scriptures/' + canon + '/' + bookSlug + '/' + chapter + '?lang=eng#p' + (verseStart || '1');
+        
+        return '<a href="' + url + '" target="_blank">' + match + '</a>';
+      });
+    }
+    
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab + '-content').classList.add('active');
+      });
+    });
+    
+    fetch('/api/canons').then(r => r.json()).then(data => {
+      canons = data;
+      fillCanon();
+      fillBooks();
+      fillChapters();
+    });
+    
+    fetch('/api/talks/years').then(r => r.json()).then(years => {
+      const yearSelect = document.getElementById('talkYear');
+      years.forEach(year => {
+        const opt = document.createElement('option');
+        opt.value = year;
+        opt.textContent = year;
+        yearSelect.appendChild(opt);
+      });
+    });
+    
+    const canonSel = document.getElementById('canon');
+    const bookSel = document.getElementById('book');
+    const chapSel = document.getElementById('chapter');
+    
+    function fillCanon() {
+      canonSel.innerHTML = '';
+      canons.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.key;
+        opt.textContent = c.name;
+        canonSel.appendChild(opt);
+      });
+      canonSel.selectedIndex = 2;
+    }
+    
+    function fillBooks() {
+      const c = canons.find(x => x.key === canonSel.value);
+      if (!c) return;
+      bookSel.innerHTML = '';
+      c.books.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.name;
+        opt.textContent = b.name;
+        bookSel.appendChild(opt);
+      });
+    }
+    
+    function fillChapters() {
+      const c = canons.find(x => x.key === canonSel.value);
+      if (!c) return;
+      const b = c.books.find(x => x.name === bookSel.value);
+      if (!b) return;
+      chapSel.innerHTML = '';
+      for (let i = 1; i <= b.chapters; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = i;
+        chapSel.appendChild(opt);
+      }
+    }
+    
+    canonSel.addEventListener('change', () => { fillBooks(); fillChapters(); });
+    bookSel.addEventListener('change', fillChapters);
+    
+    document.getElementById('talkFilterBtn').addEventListener('click', async () => {
+      const year = document.getElementById('talkYear').value;
+      const month = document.getElementById('talkMonth').value;
+      const search = document.getElementById('talkSearch').value.trim().toLowerCase();
+      
+      try {
+        let url = '/api/talks/filter?';
+        if (year) url += 'year=' + year + '&';
+        if (month) url += 'month=' + month + '&';
+        
+        const response = await fetch(url);
+        let talks = await response.json();
+        
+        if (search) {
+          talks = talks.filter(t => 
+            t.title.toLowerCase().includes(search) || 
+            t.speaker.toLowerCase().includes(search)
+          );
+        }
+        
+        displayTalks(talks);
+      } catch (err) {
+        console.error('Failed to load talks:', err);
+      }
+    });
+    
+    function displayTalks(talks) {
+      const resultsDiv = document.getElementById('talkResults');
+      
+      if (talks.length === 0) {
+        resultsDiv.innerHTML = '<div class="talk-item">No talks found. Try different filters.</div>';
+        resultsDiv.classList.add('show');
+        return;
+      }
+      
+      resultsDiv.innerHTML = talks.map(talk => '<div class="talk-item" data-title="' + talk.title + '" data-speaker="' + talk.speaker + '" data-url="' + (talk.url || '') + '"><div class="talk-title">' + talk.title + '</div><div class="talk-meta">' + talk.speaker + ' • ' + talk.month + ' ' + talk.year + '</div></div>').join('');
+      resultsDiv.classList.add('show');
+      
+      resultsDiv.querySelectorAll('.talk-item').forEach(item => {
+        item.addEventListener('click', () => {
+          resultsDiv.querySelectorAll('.talk-item').forEach(i => i.classList.remove('selected'));
+          item.classList.add('selected');
+          selectedTalk = {
+            title: item.dataset.title,
+            speaker: item.dataset.speaker,
+            url: item.dataset.url
+          };
+          document.getElementById('talkAnalyzeBtn').disabled = false;
+        });
+      });
+    }
+    
+    function getScriptureUrl(reference) {
+      const canonMap = {
+        'bom': 'bofm',
+        'ot': 'ot',
+        'nt': 'nt',
+        'dc': 'dc-testament',
+        'pgp': 'pgp'
+      };
+      
+      const parts = reference.trim().split(' ');
+      let book = '';
+      let chapter = '';
+      
+      if (parts.length >= 2) {
+        if (!isNaN(parts[0])) {
+          book = parts.slice(0, -1).join('-').toLowerCase();
+          chapter = parts[parts.length - 1];
+        } else {
+          book = parts.slice(0, -1).join('-').toLowerCase();
+          chapter = parts[parts.length - 1];
+        }
+      }
+      
+      const canon = canonMap[canonSel.value] || 'nt';
+      return 'https://www.churchofjesuschrist.org/study/scriptures/' + canon + '/' + book + '/' + chapter + '?lang=eng';
+    }
+    
+    document.getElementById('scriptureBtn').addEventListener('click', async () => {
+      const loader = document.getElementById('scriptureLoader');
+      const error = document.getElementById('scriptureError');
+      const result = document.getElementById('scriptureResult');
+      
+      const search = document.getElementById('scriptureSearch').value.trim();
+      const book = document.getElementById('book').value;
+      const chapter = document.getElementById('chapter').value;
+      const reference = search || book + ' ' + chapter;
+      currentScriptureRef = reference;
+      const focus = document.getElementById('scriptureFocus').value.trim();
+      const length = document.getElementById('scriptureLength').value;
+      
+      loader.classList.add('show');
+      error.classList.remove('show');
+      result.classList.remove('show');
+      
+      try {
+        const response = await fetch('/api/summarize/scripture', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ reference: reference, focus: focus, length: length })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to generate summary');
+        }
+        
+        displayScriptureResult(data);
+      } catch (err) {
+        error.textContent = err.message;
+        error.classList.add('show');
+      } finally {
+        loader.classList.remove('show');
+      }
+    });
+    
+    document.getElementById('talkAnalyzeBtn').addEventListener('click', async () => {
+      if (!selectedTalk) return;
+      
+      const loader = document.getElementById('talkLoader');
+      const error = document.getElementById('talkError');
+      const result = document.getElementById('talkResult');
+      const focus = document.getElementById('talkFocus').value.trim();
+      const length = document.getElementById('talkLength').value;
+      
+      loader.classList.add('show');
+      error.classList.remove('show');
+      result.classList.remove('show');
+      
+      try {
+        const response = await fetch('/api/summarize/talk', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            title: selectedTalk.title,
+            speaker: selectedTalk.speaker,
+            focus: focus,
+            length: length
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to analyze talk');
+        }
+        
+        displayTalkResult(data);
+      } catch (err) {
+        error.textContent = err.message;
+        error.classList.add('show');
+      } finally {
+        loader.classList.remove('show');
+      }
+    });
+    
+    function displayScriptureResult(data) {
+      const result = document.getElementById('scriptureResult');
+      const url = getScriptureUrl(currentScriptureRef);
+      result.innerHTML = '<h2><a href="' + url + '" target="_blank">' + data.reference + '<span class="external-link">↗</span></a></h2><h3>Overview</h3><p>' + data.overview + '</p><h3>Historical Context</h3><p>' + data.historical_context + '</p><h3>Summary</h3><p>' + data.summary + '</p><h3>Key Verses</h3><ul>' + data.key_verses.map(v => '<li>' + linkifyScriptures(v) + '</li>').join('') + '</ul><h3>Themes</h3><ul>' + data.themes.map(t => '<li>' + t + '</li>').join('') + '</ul><h3>Life Application</h3><ul>' + data.life_application.map(a => '<li>' + a + '</li>').join('') + '</ul><h3>Reflection Questions</h3><ul>' + data.reflection_questions.map(q => '<li>' + q + '</li>').join('') + '</ul><h3>Cross-References</h3><ul>' + data.cross_references.map(c => '<li>' + linkifyScriptures(c) + '</li>').join('') + '</ul>';
+      result.classList.add('show');
+    }
+    
+    function displayTalkResult(data) {
+      const result = document.getElementById('talkResult');
+      const talkUrl = selectedTalk.url ? 'https://www.churchofjesuschrist.org' + selectedTalk.url : '';
+      const titleHtml = talkUrl ? '<h2><a href="' + talkUrl + '" target="_blank">' + data.title + '<span class="external-link">↗</span></a></h2>' : '<h2>' + data.title + '</h2>';
+      
+      result.innerHTML = titleHtml + '<p><strong>Speaker:</strong> ' + data.speaker + '</p><h3>Summary</h3><p>' + linkifyScriptures(data.summary) + '</p><h3>Key Messages</h3><ul>' + data.key_messages.map(m => '<li>' + linkifyScriptures(m) + '</li>').join('') + '</ul><h3>Quotes</h3><ul>' + data.quotes.map(q => '<li>' + linkifyScriptures(q) + '</li>').join('') + '</ul><h3>Life Application</h3><ul>' + data.life_application.map(a => '<li>' + linkifyScriptures(a) + '</li>').join('') + '</ul><h3>Reflection Questions</h3><ul>' + data.reflection_questions.map(q => '<li>' + linkifyScriptures(q) + '</li>').join('') + '</ul><h3>Related Scriptures</h3><ul>' + data.related_scriptures.map(s => '<li>' + linkifyScriptures(s) + '</li>').join('') + '</ul>';
+      result.classList.add('show');
+    }
+  </script>
+</body>
+</html>
