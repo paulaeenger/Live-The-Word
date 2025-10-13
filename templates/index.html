@@ -89,6 +89,7 @@
     <div class="tabs">
       <button class="tab active" data-tab="scriptures">Scriptures</button>
       <button class="tab" data-tab="talks">Conference Talks</button>
+      <button class="tab" data-tab="essentials">Gospel Essentials</button>
       <button class="tab" data-tab="doctrine">Deep Doctrine</button>
     </div>
     <div class="tab-content active" id="scriptures-content">
@@ -124,6 +125,19 @@
         <div id="talkLoader" class="loader"><div class="spinner"></div> Analyzing talk...</div>
         <div id="talkError" class="error"></div>
         <div id="talkResult" class="result"></div>
+      </div>
+    </div>
+        <div class="tab-content" id="essentials-content">
+      <div class="card">
+        <div class="grid g2">
+          <div><label>Main Topic</label><select id="essentialsTopic"><option value="">Select a topic</option></select></div>
+          <div><label>Subtopic</label><select id="essentialsSubtopic"><option value="">Select a topic first</option></select></div>
+        </div>
+        <div style="margin-top:12px"><label>Length</label><select id="essentialsLength"><option value="brief">Brief</option><option value="standard" selected>Standard</option><option value="deep">Deep</option></select></div>
+        <div style="margin-top:16px"><button id="essentialsBtn" class="btn" disabled>Learn Essential</button></div>
+        <div id="essentialsLoader" class="loader"><div class="spinner"></div> Teaching essential...</div>
+        <div id="essentialsError" class="error"></div>
+        <div id="essentialsResult" class="result"></div>
       </div>
     </div>
     <div class="tab-content" id="doctrine-content">
@@ -453,6 +467,77 @@
     function displayDoctrineResult(data) {
       const result = document.getElementById('doctrineResult');
       result.innerHTML = '<h2>' + data.topic + '</h2><h3>Overview</h3><p>' + data.overview + '</p><h3>Doctrinal Foundation</h3><p>' + data.doctrinal_foundation + '</p><h3>Explanation</h3><p>' + linkifyScriptures(data.explanation) + '</p><h3>Key Scriptures</h3><ul>' + data.key_scriptures.map(s => '<li>' + linkifyScriptures(s) + '</li>').join('') + '</ul><h3>Prophetic Teachings</h3><ul>' + data.prophetic_teachings.map(t => '<li>' + linkifyScriptures(t) + '</li>').join('') + '</ul><h3>Deeper Insights</h3><ul>' + data.deeper_insights.map(i => '<li>' + linkifyScriptures(i) + '</li>').join('') + '</ul><h3>Study Questions</h3><ul>' + data.study_questions.map(q => '<li>' + q + '</li>').join('') + '</ul><h3>Related Topics</h3><ul>' + data.related_topics.map(t => '<li>' + t + '</li>').join('') + '</ul>';
+      result.classList.add('show');
+    }
+
+    // Gospel Essentials functionality
+    let essentialsData = [];
+    fetch('/api/gospel-essentials').then(r => r.json()).then(data => {
+      essentialsData = data;
+      const topicSelect = document.getElementById('essentialsTopic');
+      topicSelect.innerHTML = '<option value="">Select a topic</option>';
+      data.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.topic;
+        opt.textContent = item.topic;
+        topicSelect.appendChild(opt);
+      });
+    });
+    
+    document.getElementById('essentialsTopic').addEventListener('change', (e) => {
+      const topic = e.target.value;
+      const subtopicSelect = document.getElementById('essentialsSubtopic');
+      const btn = document.getElementById('essentialsBtn');
+      if (!topic) {
+        subtopicSelect.innerHTML = '<option value="">Select a topic first</option>';
+        btn.disabled = true;
+        return;
+      }
+      const topicData = essentialsData.find(d => d.topic === topic);
+      subtopicSelect.innerHTML = '<option value="">Choose a subtopic</option>';
+      topicData.subtopics.forEach(sub => {
+        const opt = document.createElement('option');
+        opt.value = sub;
+        opt.textContent = sub;
+        subtopicSelect.appendChild(opt);
+      });
+      btn.disabled = true;
+    });
+    
+    document.getElementById('essentialsSubtopic').addEventListener('change', (e) => {
+      document.getElementById('essentialsBtn').disabled = !e.target.value;
+    });
+    
+    document.getElementById('essentialsBtn').addEventListener('click', async () => {
+      const loader = document.getElementById('essentialsLoader');
+      const error = document.getElementById('essentialsError');
+      const result = document.getElementById('essentialsResult');
+      const topic = document.getElementById('essentialsTopic').value;
+      const subtopic = document.getElementById('essentialsSubtopic').value;
+      const length = document.getElementById('essentialsLength').value;
+      loader.classList.add('show');
+      error.classList.remove('show');
+      result.classList.remove('show');
+      try {
+        const response = await fetch('/api/summarize/essentials', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ topic, subtopic, length })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to teach essential');
+        displayEssentialsResult(data);
+      } catch (err) {
+        error.textContent = err.message;
+        error.classList.add('show');
+      } finally {
+        loader.classList.remove('show');
+      }
+    });
+    
+    function displayEssentialsResult(data) {
+      const result = document.getElementById('essentialsResult');
+      result.innerHTML = '<h2>' + data.topic + '</h2><h3>Overview</h3><p>' + data.overview + '</p><h3>Scriptural Foundation</h3><p>' + data.scriptural_foundation + '</p><h3>Explanation</h3><p>' + linkifyScriptures(data.explanation) + '</p><h3>Key Scriptures</h3><ul>' + data.key_scriptures.map(s => '<li>' + linkifyScriptures(s) + '</li>').join('') + '</ul><h3>Prophetic Teachings</h3><ul>' + data.prophetic_teachings.map(t => '<li>' + linkifyScriptures(t) + '</li>').join('') + '</ul><h3>Life Application</h3><ul>' + data.life_application.map(a => '<li>' + a + '</li>').join('') + '</ul><h3>Reflection Questions</h3><ul>' + data.reflection_questions.map(q => '<li>' + q + '</li>').join('') + '</ul><h3>Related Principles</h3><ul>' + data.related_principles.map(p => '<li>' + p + '</li>').join('') + '</ul>';
       result.classList.add('show');
     }
   </script>

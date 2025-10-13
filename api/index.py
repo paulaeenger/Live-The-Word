@@ -83,6 +83,44 @@ Guidelines:
 - Maintain a respectful, scholarly tone
 - Cite specific scriptures and General Authority teachings"""
 
+BASE_PROMPT_ESSENTIALS = """You are a clear, faithful teacher of fundamental LDS gospel principles.
+Task: Teach a gospel essential in a way that builds testimony and invites understanding.
+
+Return JSON in this exact shape:
+{
+  "topic": string,
+  "overview": string,
+  "scriptural_foundation": string,
+  "explanation": string,
+  "key_scriptures": string[],
+  "prophetic_teachings": string[],
+  "life_application": string[],
+  "reflection_questions": string[],
+  "related_principles": string[]
+}
+
+Guidelines:
+- Focus on clear, fundamental gospel truths
+- Use language accessible to investigators and new members
+- Include scriptural foundations and modern prophet teachings
+- Balance doctrine with practical living
+- Maintain a warm, inviting, testimony-building tone
+- Help readers understand both WHAT and WHY"""
+
+
+# GOSPEL ESSENTIALS
+GOSPEL_ESSENTIALS = [
+    {"topic": "The Godhead", "subtopics": ["God the Father", "Jesus Christ the Son", "The Holy Ghost", "Their unity of purpose"]},
+    {"topic": "The Gospel of Jesus Christ", "subtopics": ["Faith in Jesus Christ", "Repentance", "Baptism by immersion for the remission of sins", "Gift of the Holy Ghost by the laying on of hands", "Enduring to the end"]},
+    {"topic": "The Plan of Salvation", "subtopics": ["Premortal life", "The Creation", "The Fall of Adam and Eve", "Mortal probation and agency", "The Atonement of Jesus Christ", "Spirit world (paradise / prison)", "Resurrection and Judgment", "Three Degrees of Glory", "Eternal life / Exaltation"]},
+    {"topic": "The Restoration", "subtopics": ["The Apostasy", "The First Vision", "Translation of the Book of Mormon", "Restoration of the priesthoods", "Organization of Christ's Church", "Living prophets and ongoing revelation"]},
+    {"topic": "Scriptures and Revelation", "subtopics": ["The Standard Works", "Modern prophets and apostles", "Personal revelation", "The Light of Christ"]},
+    {"topic": "Ordinances and Covenants", "subtopics": ["Baptism and confirmation", "Priesthood ordination", "Sacrament", "Temple endowment and sealing", "Making and keeping covenants"]},
+    {"topic": "Commandments and Christian Living", "subtopics": ["Love and service", "Prayer and scripture study", "Sabbath day observance", "Word of Wisdom", "Law of Tithing", "Law of Chastity", "Honesty and integrity", "Forgiveness and repentance", "Charity (the pure love of Christ)", "Ministering and missionary service"]},
+    {"topic": "The Church and the Family", "subtopics": ["Church organization and priesthood offices", "The family as central to God's plan", "Eternal marriage", "Parenting and teaching in the home", "Relief Society, Young Men, Young Women, Primary, Elders Quorum"]},
+    {"topic": "Faith in Action", "subtopics": ["Obedience and agency", "Service and sacrifice", "Enduring adversity", "Missionary work", "Temple attendance"]},
+    {"topic": "The Second Coming and Eternal Life", "subtopics": ["Signs of the times", "The Millennium", "Final Judgment", "Resurrection glories", "Life with God and family forever"]}
+]
 # DEEP DOCTRINE TOPICS
 DEEP_DOCTRINE = [
     {"topic": "The Nature of God and Exaltation", "subtopics": ["God as exalted man (Lorenzo Snow couplet)", "Theosis / becoming like God", "Eternal progression of God and His children", "Divine investiture of authority", "Omniscience, omnipotence, and glory"]},
