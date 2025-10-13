@@ -350,6 +350,55 @@ def health():
     })
 
 
+
+@app.route('/api/gospel-essentials')
+def get_gospel_essentials():
+    return jsonify(GOSPEL_ESSENTIALS)
+
+@app.route('/api/summarize/essentials', methods=['POST'])
+def summarize_essentials():
+    if not client:
+        return jsonify({"error": "OpenAI client not configured"}), 500
+    
+    try:
+        data = request.json
+        topic = data.get('topic', '').strip()
+        subtopic = data.get('subtopic', '').strip()
+        length = data.get('length', 'standard')
+        
+        if not topic or not subtopic:
+            return jsonify({"error": "Topic and subtopic required"}), 400
+        
+        user_prompt = (
+            BASE_PROMPT_ESSENTIALS
+            + "\n\nNow respond for:\n"
+            + f"MAIN TOPIC: {topic}\n"
+            + f"SUBTOPIC: {subtopic}\n"
+            + f"LENGTH REQUIREMENT: {length_guidance(length)}\n"
+        )
+        
+        response = client.chat.completions.create(
+            model=MODEL,
+            temperature=0.2,
+            messages=[
+                {"role": "system", "content": "Return only a valid JSON object that matches the schema. No prose outside JSON."},
+                {"role": "user", "content": user_prompt}
+            ]
+        )
+        
+        text = response.choices[0].message.content
+        replacements = {"\u2019":"'","\u201C":'"',"\u201D":'"',"\u2013":"-","\u2014":"-"}
+        for k, v in replacements.items():
+            text = text.replace(k, v)
+        
+        result = json.loads(text)
+        return jsonify(result)
+        
+    except json.JSONDecodeError as e:
+        return jsonify({"error": f"Invalid JSON from AI: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/deep-doctrine')
 def get_deep_doctrine():
     return jsonify(DEEP_DOCTRINE)
