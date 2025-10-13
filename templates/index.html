@@ -158,6 +158,38 @@
       </div>
     </div>
     </div>
+        <div class="tab-content" id="doctrine-content">
+      <div class="card">
+        <div class="grid g2">
+          <div>
+            <label>Main Topic</label>
+            <select id="doctrineTopic">
+              <option value="">Select a topic</option>
+            </select>
+          </div>
+          <div>
+            <label>Subtopic</label>
+            <select id="doctrineSubtopic">
+              <option value="">Select a topic first</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <label>Length</label>
+          <select id="doctrineLength">
+            <option value="brief">Brief</option>
+            <option value="standard" selected>Standard</option>
+            <option value="deep">Deep</option>
+          </select>
+        </div>
+        <div style="margin-top:16px">
+          <button id="doctrineBtn" class="btn" disabled>Explore Doctrine</button>
+        </div>
+        <div id="doctrineLoader" class="loader"><div class="spinner"></div> Analyzing doctrine...</div>
+        <div id="doctrineError" class="error"></div>
+        <div id="doctrineResult" class="result"></div>
+      </div>
+    </div>
     <div class="tip">💡 Tip: Use the scripture tab for chapter summaries or the talks tab to analyze conference addresses.</div>
   </div>
   <script>
