@@ -67,33 +67,22 @@
     .result { margin-top:16px; padding:20px; background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:8px; display:none; }
     .result.show { display:block; }
     .result h2 { margin:0 0 16px; font-size:20px; color:var(--text-primary); }
-    .result h2 a { color:#0066cc; text-decoration:none; }
+    .result h2 a { color:var(--link-color); text-decoration:none; }
     .result h2 a:hover { text-decoration:underline; }
     .result h3 { margin:16px 0 8px; font-size:16px; color:var(--text-primary); }
     .result p, .result li { line-height:1.6; color:var(--text-primary); }
-    .result li a { color:#0066cc; text-decoration:none; }
+    .result li a { color:var(--link-color); text-decoration:none; }
     .result li a:hover { text-decoration:underline; }
     .error { background:rgba(255, 107, 107, 0.1); border:1px solid rgba(255, 107, 107, 0.3); color:#ff6b6b; padding:12px; border-radius:8px; margin-top:12px; display:none; }
     .error.show { display:block; }
     .external-link { display:inline-block; margin-left:6px; font-size:14px; opacity:0.6; }
-    .theme-toggle {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: var(--bg-primary);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 8px 16px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text-primary);
-    }
+    .theme-toggle { position: absolute; top: 20px; right: 20px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text-primary); }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <header><button class="theme-toggle" onclick="toggleTheme()"><span id="theme-text">Dark</span></button>
+    <header>
+      <button class="theme-toggle" onclick="toggleTheme()"><span id="theme-text">Dark</span></button>
       <h1>📖 Scripture & Conference Talk Study</h1>
       <p>Summaries and life applications for scriptures and general conference talks.</p>
     </header>
@@ -112,17 +101,9 @@
         <div class="grid g3" style="margin-top:12px">
           <div><label>Or search (theme or range)</label><input id="scriptureSearch" placeholder='e.g., "charity" or "Mosiah 2-5"'></div>
           <div><label>Focus (optional)</label><input id="scriptureFocus" placeholder="e.g., overcoming doubt"></div>
-          <div><label>Length</label>
-            <select id="scriptureLength">
-              <option value="brief">Brief</option>
-              <option value="standard" selected>Standard</option>
-              <option value="deep">Deep</option>
-            </select>
-          </div>
+          <div><label>Length</label><select id="scriptureLength"><option value="brief">Brief</option><option value="standard" selected>Standard</option><option value="deep">Deep</option></select></div>
         </div>
-        <div style="margin-top:16px">
-          <button id="scriptureBtn" class="btn">Get Scripture Summary</button>
-        </div>
+        <div style="margin-top:16px"><button id="scriptureBtn" class="btn">Get Scripture Summary</button></div>
         <div id="scriptureLoader" class="loader"><div class="spinner"></div> Generating summary...</div>
         <div id="scriptureError" class="error"></div>
         <div id="scriptureResult" class="result"></div>
@@ -144,47 +125,15 @@
         <div id="talkError" class="error"></div>
         <div id="talkResult" class="result"></div>
       </div>
-        <div class="tab-content" id="doctrine-content">
+    </div>
+    <div class="tab-content" id="doctrine-content">
       <div class="card">
         <div class="grid g2">
-          <div><label>Main Topic</label><select id="doctrineTopic"></select></div>
+          <div><label>Main Topic</label><select id="doctrineTopic"><option value="">Select a topic</option></select></div>
           <div><label>Subtopic</label><select id="doctrineSubtopic"><option value="">Select a topic first</option></select></div>
         </div>
         <div style="margin-top:12px"><label>Length</label><select id="doctrineLength"><option value="brief">Brief</option><option value="standard" selected>Standard</option><option value="deep">Deep</option></select></div>
         <div style="margin-top:16px"><button id="doctrineBtn" class="btn" disabled>Explore Doctrine</button></div>
-        <div id="doctrineLoader" class="loader"><div class="spinner"></div> Analyzing doctrine...</div>
-        <div id="doctrineError" class="error"></div>
-        <div id="doctrineResult" class="result"></div>
-      </div>
-    </div>
-    </div>
-        <div class="tab-content" id="doctrine-content">
-      <div class="card">
-        <div class="grid g2">
-          <div>
-            <label>Main Topic</label>
-            <select id="doctrineTopic">
-              <option value="">Select a topic</option>
-            </select>
-          </div>
-          <div>
-            <label>Subtopic</label>
-            <select id="doctrineSubtopic">
-              <option value="">Select a topic first</option>
-            </select>
-          </div>
-        </div>
-        <div style="margin-top:12px">
-          <label>Length</label>
-          <select id="doctrineLength">
-            <option value="brief">Brief</option>
-            <option value="standard" selected>Standard</option>
-            <option value="deep">Deep</option>
-          </select>
-        </div>
-        <div style="margin-top:16px">
-          <button id="doctrineBtn" class="btn" disabled>Explore Doctrine</button>
-        </div>
         <div id="doctrineLoader" class="loader"><div class="spinner"></div> Analyzing doctrine...</div>
         <div id="doctrineError" class="error"></div>
         <div id="doctrineResult" class="result"></div>
@@ -212,14 +161,13 @@
         book = book.trim();
         const bookData = SCRIPTURE_BOOKS[book];
         if (!bookData) return match;
-        
         const [canon, bookSlug] = bookData;
         const url = 'https://www.churchofjesuschrist.org/study/scriptures/' + canon + '/' + bookSlug + '/' + chapter + '?lang=eng#p' + (verseStart || '1');
-        
         return '<a href="' + url + '" target="_blank">' + match + '</a>';
       });
     }
     
+    // Tab switching
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -229,21 +177,31 @@
       });
     });
     
+    // Theme toggle
+    function toggleTheme() {
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      const text = document.getElementById('theme-text');
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      text.textContent = newTheme === 'dark' ? 'Light' : 'Dark';
+    }
+    
+    // Load saved theme
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      const text = document.getElementById('theme-text');
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      if (text) text.textContent = savedTheme === 'dark' ? 'Light' : 'Dark';
+    })();
+    
+    // Scripture functionality
     fetch('/api/canons').then(r => r.json()).then(data => {
       canons = data;
       fillCanon();
       fillBooks();
       fillChapters();
-    });
-    
-    fetch('/api/talks/years').then(r => r.json()).then(years => {
-      const yearSelect = document.getElementById('talkYear');
-      years.forEach(year => {
-        const opt = document.createElement('option');
-        opt.value = year;
-        opt.textContent = year;
-        yearSelect.appendChild(opt);
-      });
     });
     
     const canonSel = document.getElementById('canon');
@@ -290,71 +248,10 @@
     canonSel.addEventListener('change', () => { fillBooks(); fillChapters(); });
     bookSel.addEventListener('change', fillChapters);
     
-    document.getElementById('talkFilterBtn').addEventListener('click', async () => {
-      const year = document.getElementById('talkYear').value;
-      const month = document.getElementById('talkMonth').value;
-      const search = document.getElementById('talkSearch').value.trim().toLowerCase();
-      
-      try {
-        let url = '/api/talks/filter?';
-        if (year) url += 'year=' + year + '&';
-        if (month) url += 'month=' + month + '&';
-        
-        const response = await fetch(url);
-        let talks = await response.json();
-        
-        if (search) {
-          talks = talks.filter(t => 
-            t.title.toLowerCase().includes(search) || 
-            t.speaker.toLowerCase().includes(search)
-          );
-        }
-        
-        displayTalks(talks);
-      } catch (err) {
-        console.error('Failed to load talks:', err);
-      }
-    });
-    
-    function displayTalks(talks) {
-      const resultsDiv = document.getElementById('talkResults');
-      
-      if (talks.length === 0) {
-        resultsDiv.innerHTML = '<div class="talk-item">No talks found. Try different filters.</div>';
-        resultsDiv.classList.add('show');
-        return;
-      }
-      
-      resultsDiv.innerHTML = talks.map(talk => '<div class="talk-item" data-title="' + talk.title + '" data-speaker="' + talk.speaker + '" data-url="' + (talk.url || '') + '"><div class="talk-title">' + talk.title + '</div><div class="talk-meta">' + talk.speaker + ' • ' + talk.month + ' ' + talk.year + '</div></div>').join('');
-      resultsDiv.classList.add('show');
-      
-      resultsDiv.querySelectorAll('.talk-item').forEach(item => {
-        item.addEventListener('click', () => {
-          resultsDiv.querySelectorAll('.talk-item').forEach(i => i.classList.remove('selected'));
-          item.classList.add('selected');
-          selectedTalk = {
-            title: item.dataset.title,
-            speaker: item.dataset.speaker,
-            url: item.dataset.url
-          };
-          document.getElementById('talkAnalyzeBtn').disabled = false;
-        });
-      });
-    }
-    
     function getScriptureUrl(reference) {
-      const canonMap = {
-        'bom': 'bofm',
-        'ot': 'ot',
-        'nt': 'nt',
-        'dc': 'dc-testament',
-        'pgp': 'pgp'
-      };
-      
+      const canonMap = {'bom': 'bofm','ot': 'ot','nt': 'nt','dc': 'dc-testament','pgp': 'pgp'};
       const parts = reference.trim().split(' ');
-      let book = '';
-      let chapter = '';
-      
+      let book = '', chapter = '';
       if (parts.length >= 2) {
         if (!isNaN(parts[0])) {
           book = parts.slice(0, -1).join('-').toLowerCase();
@@ -364,7 +261,6 @@
           chapter = parts[parts.length - 1];
         }
       }
-      
       const canon = canonMap[canonSel.value] || 'nt';
       return 'https://www.churchofjesuschrist.org/study/scriptures/' + canon + '/' + book + '/' + chapter + '?lang=eng';
     }
@@ -373,7 +269,6 @@
       const loader = document.getElementById('scriptureLoader');
       const error = document.getElementById('scriptureError');
       const result = document.getElementById('scriptureResult');
-      
       const search = document.getElementById('scriptureSearch').value.trim();
       const book = document.getElementById('book').value;
       const chapter = document.getElementById('chapter').value;
@@ -381,65 +276,18 @@
       currentScriptureRef = reference;
       const focus = document.getElementById('scriptureFocus').value.trim();
       const length = document.getElementById('scriptureLength').value;
-      
       loader.classList.add('show');
       error.classList.remove('show');
       result.classList.remove('show');
-      
       try {
         const response = await fetch('/api/summarize/scripture', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ reference: reference, focus: focus, length: length })
+          body: JSON.stringify({ reference, focus, length })
         });
-        
         const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to generate summary');
-        }
-        
+        if (!response.ok) throw new Error(data.error || 'Failed to generate summary');
         displayScriptureResult(data);
-      } catch (err) {
-        error.textContent = err.message;
-        error.classList.add('show');
-      } finally {
-        loader.classList.remove('show');
-      }
-    });
-    
-    document.getElementById('talkAnalyzeBtn').addEventListener('click', async () => {
-      if (!selectedTalk) return;
-      
-      const loader = document.getElementById('talkLoader');
-      const error = document.getElementById('talkError');
-      const result = document.getElementById('talkResult');
-      const focus = document.getElementById('talkFocus').value.trim();
-      const length = document.getElementById('talkLength').value;
-      
-      loader.classList.add('show');
-      error.classList.remove('show');
-      result.classList.remove('show');
-      
-      try {
-        const response = await fetch('/api/summarize/talk', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            title: selectedTalk.title,
-            speaker: selectedTalk.speaker,
-            focus: focus,
-            length: length
-          })
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to analyze talk');
-        }
-        
-        displayTalkResult(data);
       } catch (err) {
         error.textContent = err.message;
         error.classList.add('show');
@@ -455,71 +303,72 @@
       result.classList.add('show');
     }
     
-    function displayTalkResult(data) {
-      const result = document.getElementById('talkResult');
-      const talkUrl = selectedTalk.url || '';
-      const titleHtml = talkUrl ? '<h2><a href="' + talkUrl + '" target="_blank">' + data.title + '<span class="external-link">↗</span></a></h2>' : '<h2>' + data.title + '</h2>';
-      
-      result.innerHTML = titleHtml + '<p><strong>Speaker:</strong> ' + data.speaker + '</p><h3>Summary</h3><p>' + linkifyScriptures(data.summary) + '</p><h3>Key Messages</h3><ul>' + data.key_messages.map(m => '<li>' + linkifyScriptures(m) + '</li>').join('') + '</ul><h3>Quotes</h3><ul>' + data.quotes.map(q => '<li>' + linkifyScriptures(q) + '</li>').join('') + '</ul><h3>Life Application</h3><ul>' + data.life_application.map(a => '<li>' + linkifyScriptures(a) + '</li>').join('') + '</ul><h3>Reflection Questions</h3><ul>' + data.reflection_questions.map(q => '<li>' + linkifyScriptures(q) + '</li>').join('') + '</ul><h3>Related Scriptures</h3><ul>' + data.related_scriptures.map(s => '<li>' + linkifyScriptures(s) + '</li>').join('') + '</ul>';
-      result.classList.add('show');
-    }
-
-    let doctrineData = [];
-    fetch('/api/deep-doctrine').then(r => r.json()).then(data => {
-      doctrineData = data;
-      const topicSelect = document.getElementById('doctrineTopic');
-      topicSelect.innerHTML = '<option value="">Select a topic</option>';
-      data.forEach(item => {
+    // Conference Talks functionality
+    fetch('/api/talks/years').then(r => r.json()).then(years => {
+      const yearSelect = document.getElementById('talkYear');
+      years.forEach(year => {
         const opt = document.createElement('option');
-        opt.value = item.topic;
-        opt.textContent = item.topic;
-        topicSelect.appendChild(opt);
+        opt.value = year;
+        opt.textContent = year;
+        yearSelect.appendChild(opt);
       });
     });
     
-    document.getElementById('doctrineTopic').addEventListener('change', (e) => {
-      const topic = e.target.value;
-      const subtopicSelect = document.getElementById('doctrineSubtopic');
-      const btn = document.getElementById('doctrineBtn');
-      if (!topic) {
-        subtopicSelect.innerHTML = '<option value="">Select a topic first</option>';
-        btn.disabled = true;
+    document.getElementById('talkFilterBtn').addEventListener('click', async () => {
+      const year = document.getElementById('talkYear').value;
+      const month = document.getElementById('talkMonth').value;
+      const search = document.getElementById('talkSearch').value.trim().toLowerCase();
+      try {
+        let url = '/api/talks/filter?';
+        if (year) url += 'year=' + year + '&';
+        if (month) url += 'month=' + month + '&';
+        const response = await fetch(url);
+        let talks = await response.json();
+        if (search) talks = talks.filter(t => t.title.toLowerCase().includes(search) || t.speaker.toLowerCase().includes(search));
+        displayTalks(talks);
+      } catch (err) {
+        console.error('Failed to load talks:', err);
+      }
+    });
+    
+    function displayTalks(talks) {
+      const resultsDiv = document.getElementById('talkResults');
+      if (talks.length === 0) {
+        resultsDiv.innerHTML = '<div class="talk-item">No talks found. Try different filters.</div>';
+        resultsDiv.classList.add('show');
         return;
       }
-      const topicData = doctrineData.find(d => d.topic === topic);
-      subtopicSelect.innerHTML = '<option value="">Choose a subtopic</option>';
-      topicData.subtopics.forEach(sub => {
-        const opt = document.createElement('option');
-        opt.value = sub;
-        opt.textContent = sub;
-        subtopicSelect.appendChild(opt);
+      resultsDiv.innerHTML = talks.map(talk => '<div class="talk-item" data-title="' + talk.title + '" data-speaker="' + talk.speaker + '" data-url="' + (talk.url || '') + '"><div class="talk-title">' + talk.title + '</div><div class="talk-meta">' + talk.speaker + ' • ' + talk.month + ' ' + talk.year + '</div></div>').join('');
+      resultsDiv.classList.add('show');
+      resultsDiv.querySelectorAll('.talk-item').forEach(item => {
+        item.addEventListener('click', () => {
+          resultsDiv.querySelectorAll('.talk-item').forEach(i => i.classList.remove('selected'));
+          item.classList.add('selected');
+          selectedTalk = { title: item.dataset.title, speaker: item.dataset.speaker, url: item.dataset.url };
+          document.getElementById('talkAnalyzeBtn').disabled = false;
+        });
       });
-      btn.disabled = true;
-    });
+    }
     
-    document.getElementById('doctrineSubtopic').addEventListener('change', (e) => {
-      document.getElementById('doctrineBtn').disabled = !e.target.value;
-    });
-    
-    document.getElementById('doctrineBtn').addEventListener('click', async () => {
-      const loader = document.getElementById('doctrineLoader');
-      const error = document.getElementById('doctrineError');
-      const result = document.getElementById('doctrineResult');
-      const topic = document.getElementById('doctrineTopic').value;
-      const subtopic = document.getElementById('doctrineSubtopic').value;
-      const length = document.getElementById('doctrineLength').value;
+    document.getElementById('talkAnalyzeBtn').addEventListener('click', async () => {
+      if (!selectedTalk) return;
+      const loader = document.getElementById('talkLoader');
+      const error = document.getElementById('talkError');
+      const result = document.getElementById('talkResult');
+      const focus = document.getElementById('talkFocus').value.trim();
+      const length = document.getElementById('talkLength').value;
       loader.classList.add('show');
       error.classList.remove('show');
       result.classList.remove('show');
       try {
-        const response = await fetch('/api/summarize/doctrine', {
+        const response = await fetch('/api/summarize/talk', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ topic, subtopic, length })
+          body: JSON.stringify({ title: selectedTalk.title, speaker: selectedTalk.speaker, focus, length })
         });
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Failed to analyze doctrine');
-        displayDoctrineResult(data);
+        if (!response.ok) throw new Error(data.error || 'Failed to analyze talk');
+        displayTalkResult(data);
       } catch (err) {
         error.textContent = err.message;
         error.classList.add('show');
@@ -528,29 +377,15 @@
       }
     });
     
-    function displayDoctrineResult(data) {
-      const result = document.getElementById('doctrineResult');
-      result.innerHTML = '<h2>' + data.topic + '</h2><h3>Overview</h3><p>' + data.overview + '</p><h3>Doctrinal Foundation</h3><p>' + data.doctrinal_foundation + '</p><h3>Explanation</h3><p>' + linkifyScriptures(data.explanation) + '</p><h3>Key Scriptures</h3><ul>' + data.key_scriptures.map(s => '<li>' + linkifyScriptures(s) + '</li>').join('') + '</ul><h3>Prophetic Teachings</h3><ul>' + data.prophetic_teachings.map(t => '<li>' + linkifyScriptures(t) + '</li>').join('') + '</ul><h3>Deeper Insights</h3><ul>' + data.deeper_insights.map(i => '<li>' + linkifyScriptures(i) + '</li>').join('') + '</ul><h3>Study Questions</h3><ul>' + data.study_questions.map(q => '<li>' + q + '</li>').join('') + '</ul><h3>Related Topics</h3><ul>' + data.related_topics.map(t => '<li>' + t + '</li>').join('') + '</ul>';
+    function displayTalkResult(data) {
+      const result = document.getElementById('talkResult');
+      const talkUrl = selectedTalk.url || '';
+      const titleHtml = talkUrl ? '<h2><a href="' + talkUrl + '" target="_blank">' + data.title + '<span class="external-link">↗</span></a></h2>' : '<h2>' + data.title + '</h2>';
+      result.innerHTML = titleHtml + '<p><strong>Speaker:</strong> ' + data.speaker + '</p><h3>Summary</h3><p>' + linkifyScriptures(data.summary) + '</p><h3>Key Messages</h3><ul>' + data.key_messages.map(m => '<li>' + linkifyScriptures(m) + '</li>').join('') + '</ul><h3>Quotes</h3><ul>' + data.quotes.map(q => '<li>' + linkifyScriptures(q) + '</li>').join('') + '</ul><h3>Life Application</h3><ul>' + data.life_application.map(a => '<li>' + linkifyScriptures(a) + '</li>').join('') + '</ul><h3>Reflection Questions</h3><ul>' + data.reflection_questions.map(q => '<li>' + q + '</li>').join('') + '</ul><h3>Related Scriptures</h3><ul>' + data.related_scriptures.map(s => '<li>' + linkifyScriptures(s) + '</li>').join('') + '</ul>';
       result.classList.add('show');
     }
-  </script>
-<script>
-    function toggleTheme() {
-      const html = document.documentElement;
-      const currentTheme = html.getAttribute('data-theme');
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      const text = document.getElementById('theme-text');
-      html.setAttribute('data-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-      text.textContent = newTheme === 'dark' ? 'Light' : 'Dark';
-    }
-    (function() {
-      const savedTheme = localStorage.getItem('theme') || 'light';
-      const text = document.getElementById('theme-text');
-      document.documentElement.setAttribute('data-theme', savedTheme);
-      if (text) text.textContent = savedTheme === 'dark' ? 'Light' : 'Dark';
-    })();
-
+    
+    // Deep Doctrine functionality
     let doctrineData = [];
     fetch('/api/deep-doctrine').then(r => r.json()).then(data => {
       doctrineData = data;
