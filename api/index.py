@@ -59,6 +59,52 @@ Guidelines:
 - Focus on practical application
 - Keep a warm, respectful tone"""
 
+BASE_PROMPT_DOCTRINE = """You are a knowledgeable teacher of deep LDS doctrine and theology.
+Task: Provide a comprehensive explanation of a doctrinal topic for study and understanding.
+
+Return JSON in this exact shape:
+{
+  "topic": string,
+  "overview": string,
+  "doctrinal_foundation": string,
+  "explanation": string,
+  "key_scriptures": string[],
+  "prophetic_teachings": string[],
+  "deeper_insights": string[],
+  "study_questions": string[],
+  "related_topics": string[]
+}
+
+Guidelines:
+- Be doctrinally accurate and reference authoritative sources
+- Explain complex concepts clearly and thoroughly
+- Include scriptural foundations and prophetic teachings
+- Focus on understanding doctrine deeply, not just application
+- Maintain a respectful, scholarly tone
+- Cite specific scriptures and General Authority teachings"""
+
+# DEEP DOCTRINE TOPICS
+DEEP_DOCTRINE = [
+    {"topic": "The Nature of God and Exaltation", "subtopics": ["God as exalted man (Lorenzo Snow couplet)", "Theosis / becoming like God", "Eternal progression of God and His children", "Divine investiture of authority", "Omniscience, omnipotence, and glory"]},
+    {"topic": "Eternal Law and Intelligence", "subtopics": ["Intelligence as uncreated (D&C 93)", "Light of Christ as universal law (D&C 88)", "Laws of justice and mercy", "Glory = intelligence (D&C 130)", "Blessings predicated upon law (D&C 130:20-21)"]},
+    {"topic": "Premortal Existence", "subtopics": ["Organization of intelligences", "Noble and great ones (Abraham 3)", "War in Heaven and agency", "Lucifer's rebellion", "Eternal gender and identity"]},
+    {"topic": "Creation and Cosmology", "subtopics": ["Organization of eternal matter (not ex nihilo)", "Spiritual before physical creation", "Kolob and governing stars (Abraham 3)", "Plurality of worlds (Moses 1)", "Eternal round (D&C 3; Alma 37)"]},
+    {"topic": "The Fall and Atonement", "subtopics": ["Purpose of the Fall (2 Nephi 2)", "Infinite Atonement of Christ", "Descent below all things (D&C 88)", "Justice and mercy reconciled", "Atonement's reach to all worlds"]},
+    {"topic": "Priesthood Orders and Keys", "subtopics": ["Aaronic, Melchizedek, and Patriarchal orders", "Oath and Covenant of the Priesthood", "Sealing power (Elijah)", "Keys of resurrection and creation", "Calling and election made sure", "Second Comforter experiences", "Translation and transfiguration"]},
+    {"topic": "Covenants and Eternal Family", "subtopics": ["Eternal marriage and family exaltation", "Law of adoption (historical & celestial)", "Eternal increase and continuation of seed", "Proxy ordinances for the dead", "Family order in heaven"]},
+    {"topic": "Zion and the Gathering", "subtopics": ["Gathering of Israel (spiritual & literal)", "Law of Consecration and United Order", "Enoch's Zion and translated city", "New Jerusalem and Millennial Zion", "Adam-ondi-Ahman council"]},
+    {"topic": "Spirit World and Postmortal Work", "subtopics": ["Paradise and spirit prison (Alma 40; D&C 138)", "Redemption of the dead", "Missionary work beyond the veil", "Resurrection timing and sequence", "Degrees of glory and sons of perdition"]},
+    {"topic": "Mysteries of Godliness", "subtopics": ["Meaning of 'mystery' as revealed truth", "Temple symbolism and veil imagery", "Seeing God in mortality", "Doctrine of translation (Enoch, John, 3 Nephi 28)", "Transfiguration and glory"]},
+    {"topic": "Eternal Progression", "subtopics": ["Eternal learning and growth", "Worlds without number", "Dominion and increase", "Celestial creation cycles"]},
+    {"topic": "Opposition and Darkness", "subtopics": ["Purpose of Satan and opposition", "Agency as eternal law", "Unpardonable sin and Perdition", "Discernment of spirits", "Law of restoration (Alma 41)"]},
+    {"topic": "Time and Eternity", "subtopics": ["One eternal now perspective", "Cycles of dispensations and creation", "Celestialization of earth", "Eternal records and book of life"]},
+    {"topic": "Dispensations and Administration", "subtopics": ["Adamic through Joseph Smith dispensations", "Keys of all dispensations restored", "Adam-ondi-Ahman council (Daniel 7; D&C 116)", "Future scripture (sealed portion, Ten Tribes)"]},
+    {"topic": "Worlds Without Number", "subtopics": ["Infinite creations (Moses 1:33)", "Each world with its own Redeemer", "Hierarchy of governance among gods", "Eternal creation as God's work"]},
+    {"topic": "Celestial Law and Order of Heaven", "subtopics": ["Laws of obedience, sacrifice, gospel, chastity, consecration", "Thrones, dominions, principalities, powers", "Stewardship and hierarchy of glory", "Temple covenants as heavenly law"]},
+    {"topic": "Science of Salvation", "subtopics": ["Spirit matter (D&C 131:7-8)", "Eternal elements and energy", "Resurrection as reorganization of matter", "Light and truth as spiritual energy"]},
+    {"topic": "Prophecy and Future Revelation", "subtopics": ["Restoration of all things (Acts 3:21)", "Sealed books and records to come", "Ten Tribes return", "Future roles of translated beings", "Millennium governance under Christ"]}
+]
+
 def length_guidance(length: str) -> str:
     if length == "brief":
         return "CRITICAL: Keep responses VERY concise. Overview and context: 1-2 sentences each. Summary: 2-3 sentences max. Lists: 2-3 items each."
@@ -302,6 +348,55 @@ def health():
         "openai_configured": client is not None, 
         "talks_loaded": len(TALKS)
     })
+
+
+@app.route('/api/deep-doctrine')
+def get_deep_doctrine():
+    return jsonify(DEEP_DOCTRINE)
+
+@app.route('/api/summarize/doctrine', methods=['POST'])
+def summarize_doctrine():
+    if not client:
+        return jsonify({"error": "OpenAI client not configured"}), 500
+    
+    try:
+        data = request.json
+        topic = data.get('topic', '').strip()
+        subtopic = data.get('subtopic', '').strip()
+        length = data.get('length', 'standard')
+        
+        if not topic or not subtopic:
+            return jsonify({"error": "Topic and subtopic required"}), 400
+        
+        user_prompt = (
+            BASE_PROMPT_DOCTRINE
+            + "\n\nNow respond for:\n"
+            + f"MAIN TOPIC: {topic}\n"
+            + f"SUBTOPIC: {subtopic}\n"
+            + f"LENGTH REQUIREMENT: {length_guidance(length)}\n"
+        )
+        
+        response = client.chat.completions.create(
+            model=MODEL,
+            temperature=0.2,
+            messages=[
+                {"role": "system", "content": "Return only a valid JSON object that matches the schema. No prose outside JSON."},
+                {"role": "user", "content": user_prompt}
+            ]
+        )
+        
+        text = response.choices[0].message.content
+        replacements = {"\u2019":"'","\u201C":'"',"\u201D":'"',"\u2013":"-","\u2014":"-"}
+        for k, v in replacements.items():
+            text = text.replace(k, v)
+        
+        result = json.loads(text)
+        return jsonify(result)
+        
+    except json.JSONDecodeError as e:
+        return jsonify({"error": f"Invalid JSON from AI: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
