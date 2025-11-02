@@ -28,4 +28,4 @@ AI-powered scripture summaries and conference talk analysis using GPT-4.
 1. Clone the repository:
 ```bash
 git clone https://github.com/yourusername/your-repo-name.git
-cd your-repo-name
+cd your-repo-nameMac push test: Sun Nov  2 15:08:37 MST 2025
